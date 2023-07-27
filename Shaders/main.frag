@@ -29,7 +29,11 @@ uniform DirLight dirLight;
 uniform PointLight pointLight;
 uniform SpotLight spotLight;
 
-layout(binding = 0) uniform sampler2D texture0;
+
+layout(binding = 0) uniform sampler2D albedoTex;
+layout(binding = 1) uniform sampler2D metallicTex;
+layout(binding = 2) uniform sampler2D roughnessTex;
+layout(binding = 3) uniform sampler2D normalTex;
 
 float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent){
 	vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -77,12 +81,24 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, float specularExp
 	return light.color * (diff + spec) * attenuation * intensity;
 }
 void main(){
+	vec3 usedNormal;
+	vec3 sampledNormal = texture(normalTex, texCoord).rgb;
+	if(sampledNormal != vec3(0.f)){
+		usedNormal = sampledNormal*2.f - 1.f;
+	}
+	else{
+		usedNormal = normal;
+	}
+
+
 	vec3 viewDir = normalize(viewPos - worldPos);
-	vec3 result = calcDirLight(dirLight, normal, viewDir, specularExponent);
-	result += calcPointLight(pointLight, normal, viewDir, specularExponent, worldPos);
-	result += calcSpotLight(spotLight, normal, viewDir, specularExponent, worldPos);
+	vec3 result = calcDirLight(dirLight, usedNormal, viewDir, specularExponent);
+	result += calcPointLight(pointLight, usedNormal, viewDir, specularExponent, worldPos);
+	result += calcSpotLight(spotLight, usedNormal, viewDir, specularExponent, worldPos);
 
 	vec3 ambient = vec3(0.1f);
 	result += ambient;
-	fragOut = vec4(texture(texture0, texCoord).rgb * result, 1.f);
+
+	result *= texture(albedoTex, texCoord).rgb;
+	fragOut = vec4(result, 1.f);
 }

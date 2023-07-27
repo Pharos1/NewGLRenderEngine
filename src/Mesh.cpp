@@ -10,6 +10,9 @@ Mesh::Mesh(std::vector<Vertex>& vertices)
 	create(&vertices);
 }
 Mesh::Mesh() {};
+Mesh::~Mesh() {
+	mLog(std::string("The destructor of class Mesh has been triggered! Ensure that all resources are properly handled. Hint: VAO ID -> ") + std::to_string(VAO), Log::LogWarning);
+}
 void Mesh::create(std::vector<Vertex>* vertices, std::vector<uint32_t>* indices) {
 	verticesSize = static_cast<int>(vertices->size());
 	indicesSize = indices ? static_cast<int>(indices->size()) : 0;
@@ -38,7 +41,7 @@ void Mesh::create(std::vector<Vertex>* vertices, std::vector<uint32_t>* indices)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
-void Mesh::draw() {
+void Mesh::draw() const {
 	glBindVertexArray(VAO);
 
 	if (indicesSize) {
@@ -49,7 +52,7 @@ void Mesh::draw() {
 	}
 }
 
-void MaterialMesh::draw(int firstTextureUnit) {
+void MaterialMesh::draw(int firstTextureUnit) const {
 	material.bind(firstTextureUnit);
 
 	glBindVertexArray(VAO);
@@ -60,4 +63,9 @@ void MaterialMesh::draw(int firstTextureUnit) {
 	else {
 		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(verticesSize));
 	}
+
+	material.unbind(firstTextureUnit);
+}
+MaterialMesh::~MaterialMesh(){
+	mLog(std::string("The destructor of class MaterialMesh has been triggered! Ensure that all resources are properly handled. Hint: VAO ID -> ") + std::to_string(VAO), Log::LogWarning);
 }

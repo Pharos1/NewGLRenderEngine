@@ -8,11 +8,13 @@
 #include "DeltaTime.hpp"
 #include "Light.hpp"
 #include "Texture.hpp"
+#include "Model.hpp"
 
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
-//On Application Start
+//On Application Start/End
 void initDependencies();
+void cleanup();
 
 //Error checking from learnopengl.com
 GLenum glCheckError_(const char* file, int line);
@@ -126,7 +128,7 @@ std::vector<Vertex> planeVerts = {
 	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f, 1.f}},
 };
 //Mesh cube;
-MaterialMesh cube;
+Mesh cube;
 Mesh quad;
 Mesh plane;
 
@@ -135,6 +137,9 @@ PointLight pointLight;
 SpotLight spotLight;
 
 Texture texture0;
+
+Model modelCerberus;
+glm::mat4 cerberusModelMat;
 
 //Transformation
 glm::mat4 model;
@@ -146,13 +151,17 @@ float fov = 45.f;
 Camera cam({0.f, 1.f, 5.f});
 
 int main() {
+	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
+
 	//Basically initialization and setup
 	initDependencies();
 
+	//Shaders
 	mainShader.loadShader("Shaders/main.vert", "Shaders/main.frag");
 	lightBoxShader.loadShader("Shaders/lightBox.vert", "Shaders/lightBox.frag");
 	gradientSkyboxShader.loadShader("Shaders/basic.vert", "Shaders/gradientSkybox.frag");
 
+	//Matrices
 	model = glm::mat4(1.f);
 	model = glm::translate(model, { 0.f, .5f, 0.f });
 	model = glm::scale(model, glm::vec3(0.5f));
@@ -160,16 +169,25 @@ int main() {
 	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, .1f, 100.f);
 	
 	cube.create(&cubeVerts);
-	cube.material.albedo.loadTexture("Textures/Other/Marble.jpg");
-	//cube.create(&cubeVerts);
 	quad.create(&quadVerts);
 	plane.create(&planeVerts);
-
+	
+	//Lights
 	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(1.f));
 	pointLight = PointLight({ 0.f, 1.f, 4.f }, glm::vec3(1.f));
 	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(1.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 	
 	texture0.loadTexture("Textures/Other/Wood.png");
+
+
+
+	modelCerberus.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
+	modelCerberus.meshes[0].material.normal = TextureNS::loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
+	cerberusModelMat = glm::mat4(1.f);
+	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.f, 0.f));
+	cerberusModelMat = glm::rotate(cerberusModelMat, glm::radians(-90.f), { 1.f, 0.f, 0.f });
+	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.02f));
+
 
 	//Uniforms and stuff
 	mainShader.use();
@@ -208,7 +226,10 @@ int main() {
 		spotLight.dir = cam.front;
 		spotLight.set("spotLight", mainShader);
 
-		cube.draw(0);
+		mainShader.setMat4("model", cerberusModelMat);
+		modelCerberus.draw(0);
+
+		//cube.draw(0);
 		texture0.bind(0);
 		mainShader.setMat4("model", glm::scale(glm::mat4(1.f), { 10.f, .1f, 10.f }));
 		plane.draw();
@@ -218,7 +239,7 @@ int main() {
 		lightBoxShader.setMat4("view", view);
 		lightBoxShader.setVec3("lightColor", pointLight.color);
 		lightBoxShader.setVec3("lightPos", pointLight.pos);
-		cube.draw(0);
+		cube.draw();
 
 		gradientSkyboxShader.use();
 		gradientSkyboxShader.setMat4("view", view);
@@ -231,11 +252,11 @@ int main() {
 	}
 
 	mLog("Program is now terminated.", Log::LogInfo);
-	glfwTerminate();
+	cleanup();
 	return 0;
 }
 
-//On Application Start
+//On Application Start/End
 void initDependencies() {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -298,6 +319,9 @@ void initDependencies() {
 	
 	//Background Color
 	glClearColor(0.f, 0.f, 0.f, 1.f);
+}
+void cleanup(){
+	glfwTerminate();
 }
 
 //Error checking from learnopengl.com

@@ -15,15 +15,17 @@ public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
 	Mesh(std::vector<Vertex>& vertices);
 	Mesh();
+	~Mesh();
 	
 	void create(std::vector<Vertex>* vertices, std::vector<uint32_t>* indices = nullptr);
-	virtual void draw();
+	virtual void draw() const;
 };
 class MaterialMesh : public Mesh {
 public:
 	Material material;
 
 	using Mesh::Mesh;
-
-	void draw(int firstTextureUnit);
+	~MaterialMesh();
+	
+	void draw(int firstTextureUnit) const;
 };
