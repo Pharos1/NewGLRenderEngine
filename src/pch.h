@@ -28,8 +28,8 @@
 #include <Windows.h>
 
 //OpenGL Dependencies
-#include <GLEW/glew.h>
-#include <GLAD/gl.h>
+#include <GLEW/glew.h> //Needs a preprocessor GLEW_STATIC in the project settings
+//#include <GLAD/gl.h>
 #include <GLFW/glfw3.h>
 #include <GLM/glm.hpp>
 #include <GLM/gtc/matrix_transform.hpp>

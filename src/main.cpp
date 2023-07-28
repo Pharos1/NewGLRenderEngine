@@ -14,6 +14,8 @@
 
 //On Application Start/End
 void initDependencies();
+void setupApplication();
+void setupFramebuffers();
 void cleanup();
 
 //Error checking from learnopengl.com
@@ -30,7 +32,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 //Every frame
 
-//Application
+
+//Application Specific
 uint32_t scrWidth = 1280;
 uint32_t scrHeight = 920;
 GLFWwindow* window;
@@ -39,8 +42,41 @@ GLFWwindow* window;
 Shader mainShader;
 Shader lightBoxShader;
 Shader gradientSkyboxShader;
+Shader renderQuadShader;
+Shader postprocShader;
 
-//Scene
+//Transformation
+glm::mat4 view;
+glm::mat4 proj;
+glm::mat4 cubeModelMat;
+glm::mat4 planeModelMat;
+glm::mat4 cerberusModelMat;
+
+//Objects
+Mesh cube;
+Mesh quad;
+Mesh plane;
+Model modelCerberus;
+
+//Lights
+DirLight dirLight;
+PointLight pointLight;
+SpotLight spotLight;
+
+//Textures
+Texture texture0;
+
+//Camera
+float fov = 45.f;
+Camera cam({0.f, 1.f, 5.f});
+
+//FBOs
+GLuint postprocFBO = 0;
+GLuint postprocRBO = 0;
+GLuint postprocFBOTexture = 0;
+
+
+//Object Creation Data
 /*
 std::vector<Vertex> vertices = {
 	{{-1.f, 1.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 1.f}},
@@ -127,98 +163,24 @@ std::vector<Vertex> planeVerts = {
 	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f, 0.f}},
 	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f, 1.f}},
 };
-//Mesh cube;
-Mesh cube;
-Mesh quad;
-Mesh plane;
-
-DirLight dirLight;
-PointLight pointLight;
-SpotLight spotLight;
-
-Texture texture0;
-
-Model modelCerberus;
-glm::mat4 cerberusModelMat;
-
-//Transformation
-glm::mat4 model;
-glm::mat4 view;
-glm::mat4 proj;
-
-//Camera
-float fov = 45.f;
-Camera cam({0.f, 1.f, 5.f});
 
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
 
 	//Basically initialization and setup
 	initDependencies();
-
-	//Shaders
-	mainShader.loadShader("Shaders/main.vert", "Shaders/main.frag");
-	lightBoxShader.loadShader("Shaders/lightBox.vert", "Shaders/lightBox.frag");
-	gradientSkyboxShader.loadShader("Shaders/basic.vert", "Shaders/gradientSkybox.frag");
-
-	//Matrices
-	model = glm::mat4(1.f);
-	model = glm::translate(model, { 0.f, .5f, 0.f });
-	model = glm::scale(model, glm::vec3(0.5f));
-	view = glm::mat4(1.f);
-	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, .1f, 100.f);
-	
-	cube.create(&cubeVerts);
-	quad.create(&quadVerts);
-	plane.create(&planeVerts);
-	
-	//Lights
-	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(1.f));
-	pointLight = PointLight({ 0.f, 1.f, 4.f }, glm::vec3(1.f));
-	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(1.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
-	
-	texture0.loadTexture("Textures/Other/Wood.png");
-
-
-
-	modelCerberus.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
-	modelCerberus.meshes[0].material.normal = TextureNS::loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
-	cerberusModelMat = glm::mat4(1.f);
-	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.f, 0.f));
-	cerberusModelMat = glm::rotate(cerberusModelMat, glm::radians(-90.f), { 1.f, 0.f, 0.f });
-	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.02f));
-
-
-	//Uniforms and stuff
-	mainShader.use();
-	mainShader.setMat4("model", model);
-	mainShader.setMat4("view", view);
-	mainShader.setMat4("proj", proj);
-	mainShader.set1f("specularExponent", 32.f);
-
-	dirLight.set("dirLight", mainShader);
-	pointLight.set("pointLight", mainShader);
-	spotLight.set("spotLight", mainShader);
-
-	lightBoxShader.use();
-	lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
-	lightBoxShader.setMat4("view", view);
-	lightBoxShader.setMat4("proj", proj);
-
+	setupApplication();
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
+		
+		//Compute stuff
 		DT::update();
 		cam.processInput(window);
 		view = cam.getView();
 
-		mainShader.use();
-		//model = glm::rotate(model, 0.0002f, glm::vec3(0.f, 1.f, 0.f));
-		mainShader.setMat4("model", model);
-		mainShader.setMat4("view", view);
-		mainShader.setVec3("viewPos", cam.pos);
-
+		//Update lights
 		pointLight.pos = glm::vec3(0.f, 1.f, (glm::sin(glfwGetTime()) + 1.4));
 		pointLight.set("pointLight", mainShader);
 
@@ -226,27 +188,48 @@ int main() {
 		spotLight.dir = cam.front;
 		spotLight.set("spotLight", mainShader);
 
+		//Set shaders uniforms
+		mainShader.use();
+		mainShader.setMat4("view", view);
+		mainShader.setVec3("viewPos", cam.pos);
+
+		//Draw
+		glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
+
 		mainShader.setMat4("model", cerberusModelMat);
 		modelCerberus.draw(0);
 
-		//cube.draw(0);
 		texture0.bind(0);
-		mainShader.setMat4("model", glm::scale(glm::mat4(1.f), { 10.f, .1f, 10.f }));
+		mainShader.setMat4("model", planeModelMat);
 		plane.draw();
 		texture0.unbind(0);
 
+
+		//Final additions
 		lightBoxShader.use();
 		lightBoxShader.setMat4("view", view);
 		lightBoxShader.setVec3("lightColor", pointLight.color);
 		lightBoxShader.setVec3("lightPos", pointLight.pos);
 		cube.draw();
 
+		//Some ugly skybox
 		gradientSkyboxShader.use();
 		gradientSkyboxShader.setMat4("view", view);
 		glDepthFunc(GL_LEQUAL);
 		quad.draw();
 		glDepthFunc(GL_LESS);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		postprocShader.use();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
+		glDepthFunc(GL_LEQUAL);
+		quad.draw();
+		glDepthFunc(GL_LESS);
+
+		//FINALY wait for the image to finish
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
@@ -278,10 +261,10 @@ void initDependencies() {
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 	glfwSetKeyCallback(window, keyCallback);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) { //Normal GLAD
+	//if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) { //Normal GLAD
 		//if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) { //GLAD2
-		mLog("Failed to initialize GLAD!", Log::LogError);
-	}
+	//	mLog("Failed to initialize GLAD!", Log::LogError);
+	//}
 
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
@@ -319,6 +302,95 @@ void initDependencies() {
 	
 	//Background Color
 	glClearColor(0.f, 0.f, 0.f, 1.f);
+}
+void setupApplication() {
+	//Shaders
+	mainShader.loadShader("Shaders/main.vert", "Shaders/main.frag");
+	lightBoxShader.loadShader("Shaders/lightBox.vert", "Shaders/lightBox.frag");
+	gradientSkyboxShader.loadShader("Shaders/basic.vert", "Shaders/gradientSkybox.frag");
+	renderQuadShader.loadShader("Shaders/basic.vert", "Shaders/renderQuad.frag");
+	postprocShader.loadShader("Shaders/basic.vert", "Shaders/postproc.frag");
+
+	//Transformation
+	view = glm::mat4(1.f);
+	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, .1f, 100.f);
+
+	cubeModelMat = glm::mat4(1.f);
+	cubeModelMat = glm::translate(cubeModelMat, { 0.f, .5f, 0.f });
+	cubeModelMat = glm::scale(cubeModelMat, glm::vec3(0.5f));
+	
+	planeModelMat = glm::mat4(1.f);
+	planeModelMat = glm::scale(planeModelMat, { 10.f, .1f, 10.f });
+
+	cerberusModelMat = glm::mat4(1.f);
+	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.f, 0.f));
+	cerberusModelMat = glm::rotate(cerberusModelMat, glm::radians(-90.f), { 1.f, 0.f, 0.f });
+	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.02f));
+
+
+	//Objects
+	cube.create(&cubeVerts);
+	quad.create(&quadVerts);
+	plane.create(&planeVerts);
+	modelCerberus.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
+	modelCerberus.meshes[0].material.normal = TextureNS::loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
+
+	//Lights
+	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(1.f));
+	pointLight = PointLight({ 0.f, 1.f, 4.f }, glm::vec3(1.f));
+	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(1.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
+
+	//Textures
+	texture0.loadTexture("Textures/Other/Wood.png");
+
+	//Uniforms and stuff
+	mainShader.use();
+	mainShader.setMat4("model", glm::mat4(1.f));
+	mainShader.setMat4("view", view);
+	mainShader.setMat4("proj", proj);
+	mainShader.set1f("specularExponent", 32.f);
+
+	dirLight.set("dirLight", mainShader);
+	pointLight.set("pointLight", mainShader);
+	spotLight.set("spotLight", mainShader);
+
+	lightBoxShader.use();
+	lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
+	lightBoxShader.setMat4("view", view);
+	lightBoxShader.setMat4("proj", proj);
+
+	postprocShader.use();
+	postprocShader.set1b("gammaOn", true);
+	postprocShader.set1f("gamma", 2.2f);
+	postprocShader.set1i("tonemapMode", 5);
+
+	setupFramebuffers();
+}
+void setupFramebuffers() {
+	if(!postprocFBO) glGenFramebuffers(1, &postprocFBO);
+	if(!postprocRBO) glGenRenderbuffers(1, &postprocRBO);
+	if(!postprocFBOTexture) glGenTextures(1, &postprocFBOTexture);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
+	glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scrWidth, scrHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocFBOTexture, 0);
+	
+	glBindRenderbuffer(GL_RENDERBUFFER, postprocRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, scrWidth, scrHeight);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, postprocRBO);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		mLog("Failed to create a framebuffer!", Log::LogError);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 void cleanup(){
 	glfwTerminate();

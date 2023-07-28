@@ -81,6 +81,8 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, float specularExp
 	return light.color * (diff + spec) * attenuation * intensity;
 }
 void main(){
+	vec3 albedoColor = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
+
 	vec3 usedNormal;
 	vec3 sampledNormal = texture(normalTex, texCoord).rgb;
 	if(sampledNormal != vec3(0.f)){
@@ -99,6 +101,6 @@ void main(){
 	vec3 ambient = vec3(0.1f);
 	result += ambient;
 
-	result *= texture(albedoTex, texCoord).rgb;
+	result *= albedoColor;
 	fragOut = vec4(result, 1.f);
 }

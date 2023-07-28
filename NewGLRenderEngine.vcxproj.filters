@@ -108,5 +108,11 @@
     <None Include="Shaders\basic.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\renderQuad.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\postproc.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

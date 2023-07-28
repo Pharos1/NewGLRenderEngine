@@ -57,7 +57,7 @@ void Shader::loadShader(const char* vertexPath, const char* fragmentPath, const 
 		}
 	}
 	catch (std::ifstream::failure e) {
-		mLog("Shader file not successfully read!", Log::LogError);
+		mLog(std::string("Shader file not successfully read! Ifstream failure message: ") + e.what(), Log::LogError);
 	}
 
 	//Define shaders
