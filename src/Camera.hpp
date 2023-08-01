@@ -4,7 +4,7 @@
 
 struct Camera {
 	glm::mat4 view{1};
-	float pitch = 0.f;
+	float pitch = -20.f;
 	float yaw = -90.f;
 	bool firstMouse = true;
 	double lastX{}, lastY{};
@@ -17,10 +17,11 @@ struct Camera {
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	Camera(glm::vec3 pos, float speed = 7.5f, float mouseSensitivity = .1f);
-	Camera() {};
+	Camera() = default;
 
 	const glm::mat4& getView() const;
 	void updateView();
 	void processInput(GLFWwindow* window);
 	void processMouse(double xPos, double yPos);
+	void calcFrontVec();
 };

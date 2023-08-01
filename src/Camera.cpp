@@ -48,11 +48,14 @@ void Camera::processMouse(double xPos, double yPos) {
 	if (pitch >= 90.f) pitch = 89.9f;
 	if (pitch <= -90.f) pitch = -89.9f;
 
+
+	calcFrontVec();
+	updateView();
+}
+void Camera::calcFrontVec() {
 	glm::vec3 dir;
 	dir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 	dir.y = sin(glm::radians(pitch));
 	dir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	front = glm::normalize(dir);
-
-	updateView();
 }
