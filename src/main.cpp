@@ -68,7 +68,7 @@ Texture texture0;
 
 //Camera
 float fov = 45.f;
-Camera cam({0.f, 1.f, 5.f});
+Camera cam({ 0.f, 1.5f, 3.5f });
 
 //FBOs
 GLuint postprocFBO = 0;
@@ -174,7 +174,7 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_DEPTH_BUFFER_BIT);
-		
+
 		//Compute stuff
 		DT::update();
 		cam.processInput(window);
@@ -234,7 +234,7 @@ int main() {
 		glfwSwapBuffers(window);
 	}
 
-	mLog("Program is now terminated.", Log::LogInfo);
+	mLog("Application stopped.", Log::LogInfo);
 	cleanup();
 	return 0;
 }
@@ -286,20 +286,20 @@ void initDependencies() {
 			GL_DEBUG_SEVERITY_HIGH,
 			0, nullptr, GL_TRUE);
 	}
-	
+
 	//Configure GL options
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
-	
+
 	//Face cull
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	
+
 	//Input setup
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouseCallback);
-	
+
 	//Background Color
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 }
@@ -318,27 +318,41 @@ void setupApplication() {
 	cubeModelMat = glm::mat4(1.f);
 	cubeModelMat = glm::translate(cubeModelMat, { 0.f, .5f, 0.f });
 	cubeModelMat = glm::scale(cubeModelMat, glm::vec3(0.5f));
-	
+
 	planeModelMat = glm::mat4(1.f);
 	planeModelMat = glm::scale(planeModelMat, { 10.f, .1f, 10.f });
 
 	cerberusModelMat = glm::mat4(1.f);
-	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.f, 0.f));
+	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.0f, 0.f));
 	cerberusModelMat = glm::rotate(cerberusModelMat, glm::radians(-90.f), { 1.f, 0.f, 0.f });
 	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.02f));
 
-
 	//Objects
-	cube.create(&cubeVerts);
-	quad.create(&quadVerts);
-	plane.create(&planeVerts);
+	//std::vector<uint32_t> someVec;
+	//auto lambda = [](size_t size) {
+	//	std::vector<uint32_t> someVec;
+	//	for (size_t i = 0; i < size; i++) {
+	//		someVec.push_back(i);
+	//	}
+	//	return someVec;
+	//};
+	cube.create(cubeVerts);
+	quad.create(quadVerts);
+	plane.create(planeVerts);
+
 	modelCerberus.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
-	modelCerberus.meshes[0].material.normal = TextureNS::loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
+
+	Material cerberusMaterial;
+	cerberusMaterial = std::move(modelCerberus.meshes[0].material);
+	cerberusMaterial.metallic.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_M.tga");
+	cerberusMaterial.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
+
+	modelCerberus.meshes[0].material = std::move(cerberusMaterial);
 
 	//Lights
 	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(1.f));
-	pointLight = PointLight({ 0.f, 1.f, 4.f }, glm::vec3(1.f));
-	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(1.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
+	pointLight = PointLight({ 0.f, 1.f, 4.f }, glm::vec3(0.f));
+	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(0.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 
 	//Textures
 	texture0.loadTexture("Textures/Other/Wood.png");
@@ -365,11 +379,12 @@ void setupApplication() {
 	postprocShader.set1i("tonemapMode", 5);
 
 	setupFramebuffers();
+	cam.calcFrontVec(); //Update it, so it doesn't jump on start
 }
 void setupFramebuffers() {
-	if(!postprocFBO) glGenFramebuffers(1, &postprocFBO);
-	if(!postprocRBO) glGenRenderbuffers(1, &postprocRBO);
-	if(!postprocFBOTexture) glGenTextures(1, &postprocFBOTexture);
+	if (!postprocFBO) glGenFramebuffers(1, &postprocFBO);
+	if (!postprocRBO) glGenRenderbuffers(1, &postprocRBO);
+	if (!postprocFBOTexture) glGenTextures(1, &postprocFBOTexture);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
 	glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
@@ -380,7 +395,7 @@ void setupFramebuffers() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocFBOTexture, 0);
-	
+
 	glBindRenderbuffer(GL_RENDERBUFFER, postprocRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, scrWidth, scrHeight);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -392,7 +407,7 @@ void setupFramebuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-void cleanup(){
+void cleanup() {
 	glfwTerminate();
 }
 

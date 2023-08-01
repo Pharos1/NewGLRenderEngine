@@ -5,7 +5,6 @@
 DirLight::DirLight(glm::vec3 dir, glm::vec3 color)
 	: dir(dir), color(color) {
 }
-DirLight::DirLight() {};
 void DirLight::set(const std::string& objectName, Shader& shaderProgram) const {
 	shaderProgram.use();
 	shaderProgram.setVec3(objectName + ".dir", dir);
@@ -16,7 +15,6 @@ void DirLight::set(const std::string& objectName, Shader& shaderProgram) const {
 PointLight::PointLight(glm::vec3 pos, glm::vec3 color)
 	: pos(pos), color(color) {
 }
-PointLight::PointLight() {};
 void PointLight::set(const std::string& objectName, Shader& shaderProgram) const {
 	shaderProgram.use();
 	shaderProgram.setVec3(objectName + ".pos", pos);
@@ -27,7 +25,6 @@ void PointLight::set(const std::string& objectName, Shader& shaderProgram) const
 SpotLight::SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float cutOff, float outerCutOff)
 	: pos(pos), dir(dir), color(color), cutOff(cutOff), outerCutOff(outerCutOff) {
 }
-SpotLight::SpotLight() {};
 void SpotLight::set(const std::string& objectName, Shader& shaderProgram) const {
 	shaderProgram.use();
 	shaderProgram.setVec3(objectName + ".pos", pos);
