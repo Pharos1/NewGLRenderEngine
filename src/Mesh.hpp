@@ -3,7 +3,6 @@
 #include "Vertex.hpp"
 #include "Material.hpp"
 
-
 class Mesh{
 protected:
 	GLuint VBO = 0, VAO = 0, EBO = 0;
@@ -12,20 +11,12 @@ protected:
 	int indicesSize = 0;
 
 public:
-	Mesh(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
-	Mesh(std::vector<Vertex>& vertices);
-	Mesh();
-	~Mesh();
-	
-	void create(std::vector<Vertex>* vertices, std::vector<uint32_t>* indices = nullptr);
-	virtual void draw() const;
-};
-class MaterialMesh : public Mesh {
-public:
-	Material material;
+	Material material{};
 
-	using Mesh::Mesh;
-	~MaterialMesh();
-	
-	void draw(int firstTextureUnit) const;
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices = {});
+	Mesh() = default;
+
+	void create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices = {});
+	void deleteMesh();
+	void draw(uint32_t firstTextureUnit = 0) const;
 };
