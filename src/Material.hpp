@@ -4,15 +4,17 @@
 
 class Material {
 public:
-	GLuint albedo = 0;
-	GLuint metallic = 0;
-	GLuint roughness = 0;
-	GLuint normal = 0;
+	Texture albedo;
+	Texture metallic;
+	Texture roughness;
+	Texture normal;
 
 	Material(const char* albedoPath, const char* metallicPath = nullptr, const char* roughnessPath = nullptr, const char* normalPath = nullptr);
-	Material();
-	~Material();
+	Material() = default;
+
 	void bind(int firstTextureUnit) const;
 	void unbind(int firstTextureUnit) const;
 	void deleteMaterial();
+
+	bool empty() const;
 };

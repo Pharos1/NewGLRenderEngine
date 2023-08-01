@@ -3,31 +3,38 @@
 #include "Logger.hpp"
 
 Material::Material(const char* albedoPath, const char* metallicPath, const char* roughnessPath, const char* normalPath) {
-	albedo = TextureNS::loadTexture(albedoPath);
-	if (metallicPath) metallic = TextureNS::loadTexture(metallicPath);
-	if (metallicPath) roughness = TextureNS::loadTexture(roughnessPath);
-	if (metallicPath) normal = TextureNS::loadTexture(normalPath);
-}
-Material::Material() {};
-Material::~Material() {
-	mLog(std::string("The destructor of class Material has been triggered! Ensure that all resources are properly handled. Hint: Albedo Texture ID -> ") + std::to_string(albedo), Log::LogWarning);
+	if (albedoPath) albedo.loadTexture(albedoPath);
+	if (metallicPath) metallic.loadTexture(metallicPath);
+	if (roughnessPath) roughness.loadTexture(roughnessPath);
+	if (normalPath) normal.loadTexture(normalPath);
 }
 
 void Material::bind(int firstTextureUnit) const {
-	TextureNS::bind(albedo, firstTextureUnit + 0);
-	TextureNS::bind(metallic, firstTextureUnit + 1);
-	TextureNS::bind(roughness, firstTextureUnit + 2);
-	TextureNS::bind(normal, firstTextureUnit + 3);
+	albedo.bind(firstTextureUnit);
+	metallic.bind(firstTextureUnit + 1);
+	roughness.bind(firstTextureUnit + 2);
+	normal.bind(firstTextureUnit + 3);
 }
 void Material::unbind(int firstTextureUnit) const {
-	TextureNS::unbind(albedo, firstTextureUnit + 0);
-	TextureNS::unbind(metallic, firstTextureUnit + 1);
-	TextureNS::unbind(roughness, firstTextureUnit + 2);
-	TextureNS::unbind(normal, firstTextureUnit + 3);
+	albedo.unbind(firstTextureUnit);
+	metallic.unbind(firstTextureUnit + 1);
+	roughness.unbind(firstTextureUnit + 2);
+	normal.unbind(firstTextureUnit + 3);
 }
 void Material::deleteMaterial() {
-	TextureNS::deleteTexture(albedo);
-	TextureNS::deleteTexture(metallic);
-	TextureNS::deleteTexture(roughness);
-	TextureNS::deleteTexture(normal);
+	mLog(std::string("Function 'deleteMaterial()' of class Material has been triggered! Ensure that all resources are properly handled. Hint: Albedo Texture ID -> ") + std::to_string(albedo.getID()), Log::LogInfo);
+	
+	albedo.deleteTexture();
+	metallic.deleteTexture();
+	roughness.deleteTexture();
+	normal.deleteTexture();
+}
+
+bool Material::empty() const {
+	if (!albedo.empty()) return false;
+	else if (!metallic.empty()) return false;
+	else if (!roughness.empty()) return false;
+	else if (!normal.empty()) return false;
+
+	return true;
 }
