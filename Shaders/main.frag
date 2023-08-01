@@ -2,7 +2,7 @@
 out vec4 fragOut;
 
 in vec3 worldPos;
-in vec3 normal;
+in vec3 vertNormal;
 in vec2 texCoord;
 in mat3 TBN;
 
@@ -34,10 +34,14 @@ layout(binding = 1) uniform sampler2D metallicTex;
 layout(binding = 2) uniform sampler2D roughnessTex;
 layout(binding = 3) uniform sampler2D normalTex;
 
+vec3 getNormalFromMap(){
+	vec3 tangentNormal = texture(normalTex, texCoord).xyz * 2.f - 1.f;
+	return normalize(TBN * tangentNormal);
+}
 float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent, float metallicValue){
-	vec3 halfwayDir = normalize(lightDir + viewDir);
+	vec3 halfwayVec = normalize(lightDir + viewDir);
 
-	return metallicValue * pow(max(dot(normal, halfwayDir), 0.f), specularExponent);
+	return metallicValue * pow(max(dot(normal, halfwayVec), 0.f), specularExponent);
 }
 #define lightRadius 1.15f
 float attenuation(float dist){
@@ -48,67 +52,158 @@ float attenuation(float dist){
 	attenuation *= (1.f - dist/sqrt((dist*dist) + radiusSquared));
 	return attenuation;
 }
-vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, float specularExponent, vec3 albedoColor, float metallicValue){
-	if(light.color == vec3(0.f)) return vec3(0.f);
-	vec3 lightDir = normalize(-light.dir);
-	float diff = max(dot(lightDir, normal), 0.f);
-	float spec = .3f * spec(lightDir, normal, viewDir, specularExponent, metallicValue);
 
-	return (diff * albedoColor + spec) * light.color;
+
+vec3 fresnelSchlick(float cosTheta, vec3 baseReflectivity){
+	return baseReflectivity + (1.f - baseReflectivity) * pow(clamp(1.f - cosTheta, 0.f, 1.f), 5.f);
 }
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, float specularExponent, vec3 albedoColor, float metallicValue, vec3 worldPos){
-	if(light.color == vec3(0.f)) return vec3(0.f);
-	vec3 lightDir = normalize(light.pos - worldPos);
-	float diff = max(dot(lightDir, normal), 0.f);
-	float spec = spec(lightDir, normal, viewDir, specularExponent, metallicValue);
-
-	float dist = distance(light.pos, worldPos);
-	float attenuation = attenuation(distance(light.pos, worldPos));
-
-	return (diff * albedoColor + spec) * light.color * attenuation;
+#define PI 3.14159265359f
+float distributionGGX(vec3 normalVec, vec3 halfwayVec, float roughness){
+	float area      = roughness*roughness;
+	float area2     = area*area;
+	float NdotH  = max(dot(normalVec, halfwayVec), 0.f);
+	float NdotH2 = NdotH*NdotH;
+	
+	float num   = area2;
+	float denom = (NdotH2 * (area2 - 1.f) + 1.f);
+	denom = PI * denom * denom;
+	
+	return num / denom;
 }
-vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, float specularExponent, vec3 albedoColor, float metallicValue, vec3 worldPos){
-	if(light.color == vec3(0.f)) return vec3(0.f);
+float geometrySchlickGGX(float NdotV, float roughness){
+	float r = (roughness + 1.f);
+	float k = (r*r) / 8.f;
+
+	float num = NdotV;
+	float denom = NdotV * (1.f - k) + k;
+	
+	return num / denom;
+}
+float geometrySmith(vec3 normalVec, vec3 viewDir, vec3 lightDir, float roughness){
+	float NdotV = max(dot(normalVec, viewDir), 0.1);
+	float NdotL = max(dot(normalVec, lightDir), 0.1);
+	float ggx2  = geometrySchlickGGX(NdotV, roughness);
+	float ggx1  = geometrySchlickGGX(NdotL, roughness);
+	
+	return ggx1 * ggx2;
+}
+
+vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
+	vec3 lightDir = -normalize(light.dir);
+	vec3 halfwayVec = normalize(viewDir + lightDir);
+  
+	vec3 radiance = light.color;
+
+	vec3 fresnel = fresnelSchlick(max(dot(halfwayVec, viewDir), 0.f), baseReflectivity);
+
+	//Cook-tolerance BRDF
+	float NDF = distributionGGX(normal, halfwayVec, roughness);
+	float G   = geometrySmith(normal, viewDir, lightDir, roughness);
+
+	vec3 numerator    = NDF * G * fresnel;
+	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
+	vec3 specular     = numerator / denominator; 
+
+	vec3 kS = fresnel;
+	vec3 kD = vec3(1.0) - kS;
+
+	kD *= 1.0 - metallic;
+
+	float NdotL = max(dot(normal, lightDir), 0.f);
+	return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
 	vec3 lightDir = normalize(light.pos - worldPos);
-	float diff = max(dot(lightDir, normal), 0.f);
-	float spec = spec(lightDir, normal, viewDir, specularExponent, metallicValue);
+	vec3 halfwayVec = normalize(viewDir + lightDir);
+  
+	float dist = length(light.pos - worldPos);
+	float attenuation = 1.f / (dist * dist);
+	vec3 radiance = light.color * attenuation;
+	
+	vec3 fresnel = fresnelSchlick(max(dot(halfwayVec, viewDir), 0.f), baseReflectivity);
 
-	//float dist = distance(light.pos, worldPos);
-	float attenuation = attenuation(distance(light.pos, worldPos));
+	//Cook-tolerance BRDF
+	float NDF = distributionGGX(normal, halfwayVec, roughness);
+	float G   = geometrySmith(normal, viewDir, lightDir, roughness);
 
-	//Spotlight range
+	vec3 numerator    = NDF * G * fresnel;
+	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
+	vec3 specular     = numerator / denominator; 
+
+	vec3 kS = fresnel;
+	vec3 kD = vec3(1.0) - kS;
+
+	kD *= 1.0 - metallic;
+
+	float NdotL = max(dot(normal, lightDir), 0.f);
+	return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
+	vec3 lightDir = normalize(light.pos - worldPos);
+	vec3 halfwayVec = normalize(viewDir + lightDir);
+  
+	float dist = length(light.pos - worldPos);
+	float attenuation = 1.f / (dist * dist);
+	vec3 radiance = light.color * attenuation;
+	
+	vec3 fresnel = fresnelSchlick(max(dot(halfwayVec, viewDir), 0.f), baseReflectivity);
+
+	//Cook-tolerance BRDF
+	float NDF = distributionGGX(normal, halfwayVec, roughness);
+	float G   = geometrySmith(normal, viewDir, lightDir, roughness);
+
+	vec3 numerator    = NDF * G * fresnel;
+	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
+	vec3 specular     = numerator / denominator; 
+
+	vec3 kS = fresnel;
+	vec3 kD = vec3(1.0) - kS;
+
+	kD *= 1.0 - metallic;
+
+	float NdotL = max(dot(normal, lightDir), 0.f);
+
 	float theta = dot(lightDir, normalize(-light.dir)); 
 	float epsilon = light.cutOff - light.outerCutOff;
 	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.f, 1.f);
 
-	return (diff * albedoColor + spec) * light.color * attenuation * intensity;
-}
-vec3 getNormalFromMap(){
-    vec3 tangentNormal = texture(normalTex, texCoord).xyz * 2.f - 1.f;
-    return normalize(TBN * tangentNormal);
+	return (kD * albedo / PI + specular) * radiance * NdotL * intensity;
 }
 
 void main(){
-	vec3 albedoColor = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
-	float metallicValue = texture(metallicTex, texCoord).r;
-
-	vec3 usedNormal;
+	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
+	float sampledMetallic = texture(metallicTex, texCoord).r;
+	float sampledRoughness = texture(roughnessTex, texCoord).r;
 	vec3 sampledNormal = texture(normalTex, texCoord).rgb;
+	
+	vec3 fragNormal;
 	if(sampledNormal != vec3(0.f) && TBN != mat3(0.f)){
-		usedNormal = getNormalFromMap();
+		fragNormal = getNormalFromMap();
 	}
 	else{
-		usedNormal = normalize(normal);
+		fragNormal = normalize(vertNormal);
 	}
 
 	vec3 viewDir = normalize(viewPos - worldPos);
 
-	vec3 result = calcDirLight(dirLight, usedNormal, viewDir, specularExponent, albedoColor, metallicValue);
-	result += calcPointLight(pointLight, usedNormal, viewDir, specularExponent, albedoColor, metallicValue, worldPos);
-	result += calcSpotLight(spotLight, usedNormal, viewDir, specularExponent, albedoColor, metallicValue, worldPos);
+	//vec3 result = calcDirLight(dirLight, fragNormal, viewDir, specularExponent, sampledAlbedo, sampledMetallic);
+	//result += calcPointLight(pointLight, fragNormal, viewDir, specularExponent, sampledAlbedo, sampledMetallic, worldPos);
+	//result += calcSpotLight(spotLight, fragNormal, viewDir, specularExponent, sampledAlbedo, sampledMetallic, worldPos);
+	
+	//vec3 ambient = vec3(0.05f);
+	//result += ambient * sampledAlbedo;
 
-	vec3 ambient = vec3(0.05f);
-	result += ambient * albedoColor;
+	
+	vec3 baseReflectivity = vec3(0.04);
+	baseReflectivity = mix(baseReflectivity, sampledAlbedo, sampledMetallic);
+
+	vec3 result = vec3(0.f);
+	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+
+	vec3 ambient = vec3(0.03) * sampledAlbedo;
+	result += ambient;
 
 	fragOut = vec4(result, 1.f);
 }

@@ -57,6 +57,7 @@ Mesh cube;
 Mesh quad;
 Mesh plane;
 Model modelCerberus;
+Model modelBall;
 
 //Lights
 DirLight dirLight;
@@ -68,7 +69,7 @@ Texture texture0;
 
 //Camera
 float fov = 45.f;
-Camera cam({ 0.f, 1.5f, 3.5f });
+Camera cam({ 0.f, .15f, .35f });
 
 //FBOs
 GLuint postprocFBO = 0;
@@ -172,8 +173,7 @@ int main() {
 	setupApplication();
 
 	while (!glfwWindowShouldClose(window)) {
-		glClear(GL_COLOR_BUFFER_BIT);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//Compute stuff
 		DT::update();
@@ -181,7 +181,7 @@ int main() {
 		view = cam.getView();
 
 		//Update lights
-		pointLight.pos = glm::vec3(0.f, 1.f, (glm::sin(glfwGetTime()) + 1.4));
+		pointLight.pos = cam.pos;// glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
 		pointLight.set("pointLight", mainShader);
 
 		spotLight.pos = cam.pos;
@@ -195,12 +195,38 @@ int main() {
 
 		//Draw
 		glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		mainShader.setMat4("model", cerberusModelMat);
+		//mainShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.002f)));
+		
+		//modelBall.draw(0);
 		modelCerberus.draw(0);
 
+
+		//Final additions
+		lightBoxShader.use();
+		lightBoxShader.setMat4("view", view);
+		lightBoxShader.setVec3("lightColor", pointLight.color);
+		lightBoxShader.setVec3("lightPos", pointLight.pos);
+		cube.draw();
+
+		//Some ugly skybox
+		gradientSkyboxShader.use();
+		gradientSkyboxShader.setMat4("view", view);
+		glDepthFunc(GL_LEQUAL);
+		//quad.draw();
+		glDepthFunc(GL_LESS);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		postprocShader.use();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
+		glDepthFunc(GL_LEQUAL);
+		quad.draw();
+		glDepthFunc(GL_LESS);
+
+		/*
 		texture0.bind(0);
 		mainShader.setMat4("model", planeModelMat);
 		plane.draw();
@@ -228,6 +254,7 @@ int main() {
 		glDepthFunc(GL_LEQUAL);
 		quad.draw();
 		glDepthFunc(GL_LESS);
+		*/
 
 		//FINALY wait for the image to finish
 		glfwPollEvents();
@@ -313,7 +340,7 @@ void setupApplication() {
 
 	//Transformation
 	view = glm::mat4(1.f);
-	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, .1f, 100.f);
+	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, .005f, 100.f);
 
 	cubeModelMat = glm::mat4(1.f);
 	cubeModelMat = glm::translate(cubeModelMat, { 0.f, .5f, 0.f });
@@ -323,9 +350,9 @@ void setupApplication() {
 	planeModelMat = glm::scale(planeModelMat, { 10.f, .1f, 10.f });
 
 	cerberusModelMat = glm::mat4(1.f);
-	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.0f, 0.f));
+	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.002f));
 	cerberusModelMat = glm::rotate(cerberusModelMat, glm::radians(-90.f), { 1.f, 0.f, 0.f });
-	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.02f));
+	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.0f, 0.f));
 
 	//Objects
 	//std::vector<uint32_t> someVec;
@@ -340,19 +367,22 @@ void setupApplication() {
 	quad.create(quadVerts);
 	plane.create(planeVerts);
 
-	modelCerberus.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
+	modelBall.loadModel("Models/sphere.stl");
+	modelBall.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
 
+	modelCerberus.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
 	Material cerberusMaterial;
 	cerberusMaterial = std::move(modelCerberus.meshes[0].material);
 	cerberusMaterial.metallic.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_M.tga");
+	cerberusMaterial.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
 	cerberusMaterial.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
-
+	
 	modelCerberus.meshes[0].material = std::move(cerberusMaterial);
 
 	//Lights
-	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(1.f));
-	pointLight = PointLight({ 0.f, 1.f, 4.f }, glm::vec3(0.f));
-	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(0.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
+	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(15.f));
+	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3(0.f));
+	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(1.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 
 	//Textures
 	texture0.loadTexture("Textures/Other/Wood.png");
@@ -369,7 +399,7 @@ void setupApplication() {
 	spotLight.set("spotLight", mainShader);
 
 	lightBoxShader.use();
-	lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
+	lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.01f)));
 	lightBoxShader.setMat4("view", view);
 	lightBoxShader.setMat4("proj", proj);
 
@@ -382,6 +412,7 @@ void setupApplication() {
 	cam.calcFrontVec(); //Update it, so it doesn't jump on start
 }
 void setupFramebuffers() {
+	//Post-processing HDR framebuffer
 	if (!postprocFBO) glGenFramebuffers(1, &postprocFBO);
 	if (!postprocRBO) glGenRenderbuffers(1, &postprocRBO);
 	if (!postprocFBOTexture) glGenTextures(1, &postprocFBOTexture);
@@ -389,7 +420,7 @@ void setupFramebuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
 	glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scrWidth, scrHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, scrWidth, scrHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -485,6 +516,8 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	mainShader.setMat4("proj", proj);
 	lightBoxShader.use();
 	lightBoxShader.setMat4("proj", proj);
+
+	setupFramebuffers();
 }
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	cam.processMouse(xpos, ypos);

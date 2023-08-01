@@ -15,6 +15,7 @@ void Camera::updateView() {
 }
 void Camera::processInput(GLFWwindow* window) {
 	float speedAmplifier = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) ? 3.f : (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ? .15f : 1.f);
+	speedAmplifier /= 10; //More realistic
 
 	if (glfwGetKey(window, GLFW_KEY_W))
 		pos += speed * front * DT::time * speedAmplifier;

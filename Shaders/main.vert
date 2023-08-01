@@ -6,8 +6,8 @@ layout(location = 3) in vec3 inTangent;
 
 out vec3 worldPos;
 
-out vec3 normal;
 out vec2 texCoord;
+out vec3 vertNormal;
 out mat3 TBN;
 
 uniform mat4 model;
@@ -21,16 +21,16 @@ void main(){
 	texCoord = inTexCoord;
 
 	mat3 normalMatrix = transpose(inverse(mat3(model))); //Transpose is really expensive
-	normal = normalize(normalMatrix * inNormal);
+	vertNormal = normalize(normalMatrix * inNormal);
 
 	if(inTangent == vec3(0.f))
 		TBN = mat3(0.f);
 	else{
 		vec3 T = normalize(normalMatrix * inTangent);
 		
-		T = normalize(T - dot(T, normal) * normal);
-		vec3 B = cross(normal, T);
+		T = normalize(T - dot(T, vertNormal) * vertNormal);
+		vec3 B = cross(vertNormal, T);
 		
-		TBN = mat3(T, B, normal);
+		TBN = mat3(T, B, vertNormal);
 	}
 }
