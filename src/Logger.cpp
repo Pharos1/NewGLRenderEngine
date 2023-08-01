@@ -2,25 +2,50 @@
 #include "Logger.hpp"
 
 namespace Log{
-	LogLevel minLevel = LogInfo;
-	void log(const std::string& message, LogLevel type, int line) {
-		if (type < minLevel) return;
+	ExcludedLevels::ExcludedLevels(uint16_t flags)
+		: flagValue(flags){
+	}
+	void ExcludedLevels::set(LogLevel flag) {
+		flagValue |= (int)flag;
+	}
+	void ExcludedLevels::unset(LogLevel flag) {
+		flagValue &= ~(int)flag;
+	}
+	void ExcludedLevels::flip(LogLevel flag) {
+		flagValue ^= (int)flag;
+	}
+	bool ExcludedLevels::has(LogLevel flag) const {
+		return (flagValue & (int)flag) == (int)flag;
+	}
+
+	ExcludedLevels excludedLevels(0);
+
+	void log(const std::string& message, LogLevel type, int line, const char* fileName) {
+		if (excludedLevels.has(type)) return;
 
 		switch (type) {
 		case LogInfo:
-			std::cout << "INFO";
+			std::cerr << "INFO";
+			break;
+		case LogDestructorInfo:
+			std::cerr << "DESTRUCTOR_INFO";
 			break;
 		case LogWarning:
-			std::cout << "WARNING";
+			std::cerr << "WARNING";
 			break;
 		case LogError:
-			std::cout << "ERROR";
+			std::cerr << "ERROR";
 			break;
 		}
 
-		std::cout << ((line > 0) ? (" at line " + std::to_string(line)) : "") << ": " << message << std::endl;
+		std::cerr << ": " << message;
+		if (fileName)
+			std::cerr << " File '" << fileName << "'.";
+		if(line > 0)
+			std::cerr << " Line " << line << ".";
+		std::cerr << std::endl;
 
-		if (type == LogError)
-			exit(-1);
+		if (type & LogError)
+			throw std::exception(); //exit(-1);
 	}
 }
