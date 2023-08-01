@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <stdlib.h>
 
 //Data structures
 #include <string>
