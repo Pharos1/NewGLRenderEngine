@@ -4,19 +4,26 @@
 //Note: Shaders remove inactive uniforms i.e. uniforms that don't contribute to the final result.
 class Shader {
 private:
-	unsigned int ID = 0;
+	uint32_t id = 0;
+
 	void checkCompileErrors(GLuint shader, std::string type);
 
 public:
 	void loadShader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
-	Shader();
+	Shader() = default;
 	~Shader();
+
+	Shader(const Shader&) = delete;
+	void operator=(const Shader&) = delete;
+
+	Shader(Shader&& other) noexcept;
+	void operator=(Shader&& other) noexcept;
 
 	int getID() const;
 	void use() const;
 	void unuse() const;
-	void deleteProgram() const;
+	void deleteProgram();
 
 	void set1b(const std::string& name, bool value) const;
 	void set1i(const std::string& name, int value) const;
