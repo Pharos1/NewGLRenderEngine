@@ -4,15 +4,6 @@
 Model::Model(std::string const& path) {
 	loadModel(path);
 }
-Model::Model() {};
-Model::~Model() {
-	mLog(std::string("The destructor of class Model has been triggered. Ensure that all resources are properly handled. Hint: Directory -> ") + this->directory, Log::LogWarning);
-
-	//FINALLY Clenaup
-	for (uint32_t i = 0; i < meshes.size(); i++) {
-		meshes[i].material.deleteMaterial();
-	}
-};
 
 void Model::draw(int firstTextureUnit) const {
 	for (unsigned int i = 0; i < meshes.size(); i++)
@@ -33,7 +24,7 @@ void Model::loadModel(const std::string& path) {
 
 	processNode(scene->mRootNode, scene);
 
-	loadedTextures.clear(); //Just in case
+	//loadedTextures.clear(); //Just in case
 }
 void Model::processNode(aiNode* node, const aiScene* scene) {
 	for (uint32_t i = 0; i < node->mNumMeshes; i++) {
@@ -44,7 +35,7 @@ void Model::processNode(aiNode* node, const aiScene* scene) {
 		processNode(node->mChildren[i], scene);
 	}
 }
-MaterialMesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
+Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
@@ -72,13 +63,14 @@ MaterialMesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node
 			vec.y = mesh->mTextureCoords[0][i].y;
 			vertex.texCoord = vec;
 
-			//vector.x = mesh->mTangents[i].x;
-			//vector.y = mesh->mTangents[i].y;
-			//vector.z = mesh->mTangents[i].z;
-			//vertex.tangent = vector;
+			vector.x = mesh->mTangents[i].x;
+			vector.y = mesh->mTangents[i].y;
+			vector.z = mesh->mTangents[i].z;
+			vertex.tangent = vector;
 		}
 		else
 			vertex.texCoord = glm::vec2(0.0f, 0.0f);
+		
 		vertices.push_back(vertex);
 	}
 	for (uint32_t i = 0; i < mesh->mNumFaces; i++) {
@@ -88,7 +80,7 @@ MaterialMesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node
 			indices.push_back(face.mIndices[j]);
 	}
 
-	MaterialMesh finalMesh(vertices, indices);
+	Mesh finalMesh(vertices, indices);
 
 	if (scene->HasMaterials()) {
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -100,9 +92,9 @@ MaterialMesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node
 		//loadMaterial(finalMesh.material.AO, material, aiTextureType_LIGHTMAP);
 	}
 
-	return finalMesh;
+	return std::move(finalMesh);
 }
-void Model::loadMaterial(GLuint& textureID, const aiMaterial* material, aiTextureType type) {
+void Model::loadMaterial(Texture& texture, const aiMaterial* material, aiTextureType type) {
 	aiString texturePath;
 	if (material->GetTexture(type, 0, &texturePath) == -1)
 		return;
@@ -110,19 +102,21 @@ void Model::loadMaterial(GLuint& textureID, const aiMaterial* material, aiTextur
 	std::string path = this->directory + "/" + texturePath.C_Str();
 	std::replace(path.begin(), path.end(), '\\', '/');
 
-	bool skip = false;
-	for (int i = 0; i < loadedTextures.size(); i++) {
-		auto [loadedPath, loadedID] = loadedTextures[i];
-		if (loadedPath == path) {
-			skip = true;
-
-			textureID = loadedID;
-
-			break;
-		}
-	}
-	if (!skip) {
-		textureID = TextureNS::loadTexture(path.c_str());
-		loadedTextures.push_back({ path, textureID });
-	}
+	//bool skip = false; //              NO OPTIMIZATION
+	//for (int i = 0; i < loadedTextures.size(); i++) {
+	//	//auto [loadedPath, loadedID] = loadedTextures[i];
+	//	std::string loadedPath = loadedTextures[i].path;
+	//	if (loadedPath == path) {
+	//		skip = true;
+	//
+	//		texture = loadedID;
+	//
+	//		break;
+	//	}
+	//}
+	//if (!skip) {
+		//textureID = TextureNS::loadTexture(path.c_str());
+	texture.loadTexture(path.c_str());
+		//loadedTextures.push_back();
+	//}
 }

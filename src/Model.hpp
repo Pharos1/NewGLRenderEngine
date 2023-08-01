@@ -9,17 +9,16 @@
 
 class Model {
 public:
-	std::vector<std::tuple<std::string, GLuint>> loadedTextures;
-	std::vector<MaterialMesh> meshes;
+	std::vector<Texture> loadedTextures;
+	std::vector<Mesh> meshes;
 	std::string directory;
 
 	Model(std::string const& path);
-	Model();
-	~Model();
+	Model() = default;
 
-	void draw(int firstTextureUnit) const;
+	void draw(int firstTextureUnit = 0) const;
 	void loadModel(const std::string& path);
 	void processNode(aiNode* node, const aiScene* scene);
-	MaterialMesh processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node);
-	void loadMaterial(GLuint& textureID, const aiMaterial* material, aiTextureType type);
+	Mesh processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node);
+	void loadMaterial(Texture& texture, const aiMaterial* material, aiTextureType type);
 };
