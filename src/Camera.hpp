@@ -10,7 +10,7 @@ struct Camera {
 	double lastX{}, lastY{};
 
 	//Optional
-	float speed = 7.5f;
+	float speed = 75.f;
 	float mouseSensitivity = 0.1f;
 	glm::vec3 pos{};
 	glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);

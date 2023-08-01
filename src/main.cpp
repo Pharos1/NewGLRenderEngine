@@ -9,6 +9,7 @@
 #include "Light.hpp"
 #include "Texture.hpp"
 #include "Model.hpp"
+#include "Framebuffer.hpp"
 
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
@@ -58,6 +59,7 @@ Mesh quad;
 Mesh plane;
 Model modelCerberus;
 Model modelBall;
+Model modelSponza;
 
 //Lights
 DirLight dirLight;
@@ -72,9 +74,7 @@ float fov = 45.f;
 Camera cam({ 0.f, .15f, .35f });
 
 //FBOs
-GLuint postprocFBO = 0;
-GLuint postprocRBO = 0;
-GLuint postprocFBOTexture = 0;
+Framebuffer postprocFB;
 
 
 //Object Creation Data
@@ -194,15 +194,17 @@ int main() {
 		mainShader.setVec3("viewPos", cam.pos);
 
 		//Draw
-		glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		postprocFB.bind();
+		postprocFB.clear();
 
-		mainShader.setMat4("model", cerberusModelMat);
 		//mainShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.002f)));
 		
 		//modelBall.draw(0);
+		mainShader.setMat4("model", cerberusModelMat);
 		modelCerberus.draw(0);
-
+		
+		mainShader.setMat4("model", glm::mat4(1.f));
+		modelSponza.draw(0);
 
 		//Final additions
 		lightBoxShader.use();
@@ -215,16 +217,18 @@ int main() {
 		gradientSkyboxShader.use();
 		gradientSkyboxShader.setMat4("view", view);
 		glDepthFunc(GL_LEQUAL);
-		//quad.draw();
+		quad.draw();
 		glDepthFunc(GL_LESS);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		postprocFB.unbind();
 
 		postprocShader.use();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
+		postprocFB.bindTexture(0);
+		
 		glDepthFunc(GL_LEQUAL);
 		quad.draw();
 		glDepthFunc(GL_LESS);
+		
+		postprocFB.unbindTexture(0);
 
 		/*
 		texture0.bind(0);
@@ -350,8 +354,7 @@ void setupApplication() {
 	planeModelMat = glm::scale(planeModelMat, { 10.f, .1f, 10.f });
 
 	cerberusModelMat = glm::mat4(1.f);
-	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.002f));
-	cerberusModelMat = glm::rotate(cerberusModelMat, glm::radians(-90.f), { 1.f, 0.f, 0.f });
+	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.004f));
 	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 1.0f, 0.f));
 
 	//Objects
@@ -379,10 +382,12 @@ void setupApplication() {
 	
 	modelCerberus.meshes[0].material = std::move(cerberusMaterial);
 
+	modelSponza.loadModel("Models/Sponza/sponza.glTF");
+	
 	//Lights
-	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(15.f));
+	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(0.f));
 	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3(0.f));
-	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(1.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
+	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(25.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 
 	//Textures
 	texture0.loadTexture("Textures/Other/Wood.png");
@@ -413,30 +418,10 @@ void setupApplication() {
 }
 void setupFramebuffers() {
 	//Post-processing HDR framebuffer
-	if (!postprocFBO) glGenFramebuffers(1, &postprocFBO);
-	if (!postprocRBO) glGenRenderbuffers(1, &postprocRBO);
-	if (!postprocFBOTexture) glGenTextures(1, &postprocFBOTexture);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, postprocFBO);
-	glBindTexture(GL_TEXTURE_2D, postprocFBOTexture);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, scrWidth, scrHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postprocFBOTexture, 0);
-
-	glBindRenderbuffer(GL_RENDERBUFFER, postprocRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, scrWidth, scrHeight);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, postprocRBO);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		mLog("Failed to create a framebuffer!", Log::LogError);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	postprocFB.internalFormat = GL_RGBA16F;
+	postprocFB.width = scrWidth;
+	postprocFB.height = scrHeight;
+	postprocFB.create();
 }
 void cleanup() {
 	glfwTerminate();

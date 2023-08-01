@@ -15,10 +15,10 @@ public:
 	~Shader();
 
 	Shader(const Shader&) = delete;
-	void operator=(const Shader&) = delete;
+	Shader& operator=(const Shader&) = delete;
 
 	Shader(Shader&& other) noexcept;
-	void operator=(Shader&& other) noexcept;
+	Shader& operator=(Shader&& other) noexcept;
 
 	int getID() const;
 	void use() const;

@@ -11,7 +11,7 @@ void Model::draw(int firstTextureUnit) const {
 }
 void Model::loadModel(const std::string& path) {
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph); //aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph
+	const aiScene* scene = importer.ReadFile(path, aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcessPreset_TargetRealtime_Fast); //aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
 		mLog(std::string("Failed to load model at path '") + path + "'. ASSIMP error string: " + importer.GetErrorString(), Log::LogError);

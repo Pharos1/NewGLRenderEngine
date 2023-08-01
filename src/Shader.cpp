@@ -124,7 +124,7 @@ Shader::~Shader() {
 Shader::Shader(Shader&& other) noexcept {
 	id = std::exchange(other.id, 0);
 }
-void Shader::operator=(Shader&& other) noexcept {
+Shader& Shader::operator=(Shader&& other) noexcept {
 	deleteProgram();
 
 	id = std::exchange(other.id, 0);

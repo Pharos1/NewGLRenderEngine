@@ -29,7 +29,7 @@ void main(){
 		vec3 T = normalize(normalMatrix * inTangent);
 		
 		T = normalize(T - dot(T, vertNormal) * vertNormal);
-		vec3 B = cross(vertNormal, T);
+		vec3 B = cross(vertNormal, T); //use bitangent inside model.cpp
 		
 		TBN = mat3(T, B, vertNormal);
 	}

@@ -89,6 +89,8 @@ float geometrySmith(vec3 normalVec, vec3 viewDir, vec3 lightDir, float roughness
 }
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
+	if(light.color == vec3(0.f)) return vec3(0.f);
+	
 	vec3 lightDir = -normalize(light.dir);
 	vec3 halfwayVec = normalize(viewDir + lightDir);
   
@@ -113,6 +115,8 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 	return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
+	if(light.color == vec3(0.f)) return vec3(0.f);
+	
 	vec3 lightDir = normalize(light.pos - worldPos);
 	vec3 halfwayVec = normalize(viewDir + lightDir);
   
@@ -139,6 +143,8 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, 
 	return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
+	if(light.color == vec3(0.f)) return vec3(0.f);
+	
 	vec3 lightDir = normalize(light.pos - worldPos);
 	vec3 halfwayVec = normalize(viewDir + lightDir);
   
@@ -171,6 +177,8 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 }
 
 void main(){
+	if(texture(albedoTex, texCoord).a < .05f) discard;
+
 	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
 	float sampledMetallic = texture(metallicTex, texCoord).r;
 	float sampledRoughness = texture(roughnessTex, texCoord).r;
