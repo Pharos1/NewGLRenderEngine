@@ -1,8 +1,8 @@
 #pragma once
-#include "pch.h"
+#include "../pch.h"
 
 #include "Mesh.hpp"
-#include "Shader.hpp"
+#include "../Render/Shader.hpp"
 #include "Texture.hpp"
 #include "Vertex.hpp"
 #include "Material.hpp"

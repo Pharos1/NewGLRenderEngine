@@ -1,7 +1,7 @@
-#include "pch.h"
+#include "../pch.h"
 #include "Camera.hpp"
 
-#include "DeltaTime.hpp"
+#include "../Utilities/Time.hpp"
 
 Camera::Camera(glm::vec3 pos, float speed, float mouseSensitivity)
 	: pos(pos), speed(speed), mouseSensitivity(mouseSensitivity){
@@ -15,15 +15,16 @@ void Camera::updateView() {
 }
 void Camera::processInput(GLFWwindow* window) {
 	float speedAmplifier = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) ? 3.f : (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ? .15f : 1.f);
+	float finalSpeed = Time::deltaTime * speedAmplifier * speed;
 
 	if (glfwGetKey(window, GLFW_KEY_W))
-		pos += speed * front * DT::time * speedAmplifier;
+		pos += front * finalSpeed;
 	if (glfwGetKey(window, GLFW_KEY_S))
-		pos -= speed * front * DT::time * speedAmplifier;
+		pos -= front * finalSpeed;
 	if (glfwGetKey(window, GLFW_KEY_A))
-		pos -= glm::normalize(glm::cross(front, up)) * speed * DT::time * speedAmplifier;
+		pos -= glm::normalize(glm::cross(front, up)) * finalSpeed;
 	if (glfwGetKey(window, GLFW_KEY_D))
-		pos = pos + glm::normalize(glm::cross(front, up)) * speed * DT::time * speedAmplifier;
+		pos += glm::normalize(glm::cross(front, up)) * finalSpeed;
 
 	updateView();
 }

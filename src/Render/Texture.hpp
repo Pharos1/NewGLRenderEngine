@@ -1,6 +1,6 @@
 #pragma once
-#include "pch.h"
-#include "Logger.hpp"
+#include "../pch.h"
+#include "../Utilities/Logger.hpp"
 
 class Texture {
 protected:

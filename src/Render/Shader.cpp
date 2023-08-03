@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "../pch.h"
 #include "Shader.hpp"
-#include "Logger.hpp"
+#include "../Utilities/Logger.hpp"
 
 void Shader::checkCompileErrors(GLuint shader, std::string type) {
 		GLint success;
@@ -125,9 +125,13 @@ Shader::Shader(Shader&& other) noexcept {
 	id = std::exchange(other.id, 0);
 }
 Shader& Shader::operator=(Shader&& other) noexcept {
+	if (this == &other) return *this;
+	
 	deleteProgram();
 
 	id = std::exchange(other.id, 0);
+
+	return *this;
 }
 
 int Shader::getID() const {

@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "../pch.h"
 #include "Framebuffer.hpp"
 
 Framebuffer::Framebuffer(GLsizei width, GLsizei height)
@@ -42,7 +42,7 @@ Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
 }
 
 void Framebuffer::create() {
-	if (!width && !height) {
+	if (width < 0 || height < 0) {
 		mLog("Attempted to create a framebuffer with no size provided! Ensure you entered the correct width and height.", Log::LogError);
 		return;
 	}
@@ -52,7 +52,7 @@ void Framebuffer::create() {
 	if (!FBOTexture) glGenTextures(1, &FBOTexture);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-	glBindTexture(GL_TEXTURE_2D, FBOTexture);
+	glBindTexture(target, FBOTexture);
 
 	glTexImage2D(target, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
 
@@ -73,7 +73,7 @@ void Framebuffer::create() {
 		mLog("Failed to create a framebuffer!", Log::LogError);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(target, 0);
 }
 void Framebuffer::bind() const {
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
@@ -101,8 +101,8 @@ void Framebuffer::deleteFramebuffer() {
 	RBO = 0;
 	FBOTexture = 0;
 	target = GL_TEXTURE_2D;
-	width = 0;
-	height = 0;
+	width = -1;
+	height = -1;
 	internalFormat = GL_RGBA;
 	format = GL_RGBA;
 	minFilter = GL_LINEAR;

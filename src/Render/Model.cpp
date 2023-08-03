@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "../pch.h"
 #include "Model.hpp"
 
 Model::Model(std::string const& path) {
@@ -67,6 +67,11 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 			vector.y = mesh->mTangents[i].y;
 			vector.z = mesh->mTangents[i].z;
 			vertex.tangent = vector;
+
+			vector.x = mesh->mBitangents[i].x;
+			vector.y = mesh->mBitangents[i].y;
+			vector.z = mesh->mBitangents[i].z;
+			vertex.bitangent = vector;
 		}
 		else
 			vertex.texCoord = glm::vec2(0.0f, 0.0f);
@@ -92,7 +97,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 		//loadMaterial(finalMesh.material.AO, material, aiTextureType_LIGHTMAP);
 	}
 
-	return std::move(finalMesh);
+	return finalMesh;
 }
 void Model::loadMaterial(Texture& texture, const aiMaterial* material, aiTextureType type) {
 	aiString texturePath;

@@ -20,40 +20,46 @@
     <ClCompile Include="src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Camera.cpp">
+    <ClCompile Include="src\RenderUtilities\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\DeltaTime.cpp">
+    <ClCompile Include="src\Utilities\Time.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Light.cpp">
+    <ClCompile Include="src\RenderUtilities\Light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logger.cpp">
+    <ClCompile Include="src\Utilities\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mesh.cpp">
+    <ClCompile Include="src\Render\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Shader.cpp">
+    <ClCompile Include="src\RenderUtilities\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Vertex.cpp">
+    <ClCompile Include="src\Render\Vertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Texture.cpp">
+    <ClCompile Include="src\Render\Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Model.cpp">
+    <ClCompile Include="src\Render\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Material.cpp">
+    <ClCompile Include="src\Render\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framebuffer.cpp">
+    <ClCompile Include="src\RenderUtilities\Framebuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utilities\Query.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -61,63 +67,69 @@
     <ClInclude Include="src\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Camera.hpp">
+    <ClInclude Include="src\RenderUtilities\Camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\DeltaTime.hpp">
+    <ClInclude Include="src\Utilities\Time.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Light.hpp">
+    <ClInclude Include="src\RenderUtilities\Light.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Logger.hpp">
+    <ClInclude Include="src\Utilities\Logger.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Mesh.hpp">
+    <ClInclude Include="src\Render\Mesh.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Vertex.hpp">
+    <ClInclude Include="src\Render\Vertex.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Shader.hpp">
+    <ClInclude Include="src\RenderUtilities\Shader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Texture.hpp">
+    <ClInclude Include="src\Render\Texture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Model.hpp">
+    <ClInclude Include="src\Render\Model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Material.hpp">
+    <ClInclude Include="src\Render\Material.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Framebuffer.hpp">
+    <ClInclude Include="src\RenderUtilities\Framebuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utilities\Query.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Application.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\main.vert">
+    <None Include="src\Shaders\main.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\main.frag">
+    <None Include="src\Shaders\main.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\lightBox.vert">
+    <None Include="src\Shaders\lightBox.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\lightBox.frag">
+    <None Include="src\Shaders\lightBox.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\gradientSkybox.frag">
+    <None Include="src\Shaders\gradientSkybox.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\basic.vert">
+    <None Include="src\Shaders\basic.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\renderQuad.frag">
+    <None Include="src\Shaders\renderQuad.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\postproc.frag">
+    <None Include="src\Shaders\postproc.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

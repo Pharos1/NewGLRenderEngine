@@ -1,8 +1,9 @@
 #pragma once
-#include "pch.h"
-#include "DeltaTime.hpp"
+#include "../pch.h"
+#include "../Utilities/Time.hpp"
 
-struct Camera {
+class Camera {
+public:
 	glm::mat4 view{1};
 	float pitch = -20.f;
 	float yaw = -90.f;

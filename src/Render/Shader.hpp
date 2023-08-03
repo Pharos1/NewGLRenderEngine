@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+#include "../pch.h"
 
 //Note: Shaders remove inactive uniforms i.e. uniforms that don't contribute to the final result.
 class Shader {

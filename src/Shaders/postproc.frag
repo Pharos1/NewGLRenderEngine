@@ -56,45 +56,31 @@ void main(){
 	vec3 result;
 
 	result = texture(colorBuffer, texCoord).rgb;
-	switch(tonemapMode){
-		case 0:
-			break;
-		case 1:
-			result = reinhard(result);
-			break;
-		case 2:
-			result = reinhardExtended(result);
-			break;
-		case 3:
-			result = uncharted2(result);
-			break;
-		case 4:
-			result = hillACES(result);
-			break;
-		case 5:
-			result = narkowiczACES(result);
-			break;
-		case 6:
-			result = manualExposure(result);
-			break;
-	}
+
+	if(tonemapMode == 1) result = reinhard(result);
+	else if(tonemapMode == 2) result = reinhardExtended(result);
+	else if(tonemapMode == 3) result = uncharted2(result);
+	else if(tonemapMode == 4) result = hillACES(result);
+	else if(tonemapMode == 5) result = narkowiczACES(result);
+	else if(tonemapMode == 6) result = manualExposure(result);
+
 	if(bloomOn){
-		result += texture(bloomBlur, texCoord).rgb;
+		//result += texture(bloomBlur, texCoord).rgb;
 	}
 	if(gammaOn){
-		result = pow(result, vec3(1.0 / gamma));
+		result = pow(result, vec3(1.f / gamma));
 	}
 	if(blurOn){
 		//Has to be implemented
 	}
 	fragOut = vec4(result, 1.f);
 }
-float luminance(vec3 v){
-	return dot(v, vec3(0.2126f, 0.7152f, 0.0722f));
+float luminance(vec3 color){
+	return dot(color, vec3(.2126f, .7152f, .0722f));
 }
-vec3 changeLuminance(vec3 c_in, float l_out){
-	float l_in = luminance(c_in);
-	return c_in * (l_out / l_in);
+vec3 changeLuminance(vec3 color, float lumOut){
+	float lumIn = luminance(color);
+	return color * (lumOut / lumIn);
 }
 vec3 reinhard(vec3 color){
 	float lumOld = luminance(color);
@@ -105,8 +91,8 @@ vec3 reinhard(vec3 color){
 vec3 reinhardExtended(vec3 color){
 	float lumOld = luminance(color);
 
-	float divident = lumOld * (1 + lumOld / pow(maxRadiance, 2));
-	float lumNew = divident / (1 + lumOld);
+	float numerator = lumOld * (1 + lumOld / pow(maxRadiance, 2));
+	float lumNew = numerator / (1 + lumOld);
 
 	return changeLuminance(color, lumNew);
 }
@@ -118,7 +104,7 @@ vec3 reinhardExtended(vec3 color){
 #define E 0.02
 #define F 0.30
 
-//Uncharted2 tonemapping is, as you might have guessed, it is from Uncharted2
+//Uncharted2 tonemapping is from, as you might have guessed, Uncharted2
 vec3 uncharted2Equation(vec3 x){
 	return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }

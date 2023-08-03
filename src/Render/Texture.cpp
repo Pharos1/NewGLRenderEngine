@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "Logger.hpp"
+#include "../pch.h"
+#include "../Utilities/Logger.hpp"
 #include "Texture.hpp"
 
 Texture::Texture(const char* path, bool invertY, GLenum glType) {
@@ -16,8 +16,9 @@ Texture::~Texture() { //Made the deletion explicit as this destructor messes eve
 }
 
 Texture::Texture(Texture&& other) noexcept {
-	id = std::exchange(other.id, 0);
-	glType = std::exchange(other.glType, 0);
+	std::swap(id, other.id);
+	std::swap(glType, other.glType);
+	std::swap(path, other.path);
 }
 Texture& Texture::operator=(Texture&& other) noexcept {
 	if (this == &other) return *this;
@@ -26,6 +27,7 @@ Texture& Texture::operator=(Texture&& other) noexcept {
 
 	std::swap(id, other.id);
 	std::swap(glType, other.glType);
+	std::swap(path, other.path);
 
 	return *this;
 }
@@ -54,6 +56,7 @@ void Texture::deleteTexture() {
 
 	id = 0; //Just in case
 	glType = 0;
+	path = "";
 }
 void Texture::loadTexture(const char* path, bool invertY, GLenum glType) {
 	//Note: glGenTexture generates n number of texture ids and sends them to the second parameter

@@ -43,7 +43,7 @@ float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent, flo
 
 	return metallicValue * pow(max(dot(normal, halfwayVec), 0.f), specularExponent);
 }
-#define lightRadius 1.15f
+#define lightRadius 1.f
 float attenuation(float dist){
 	//Point Light Attenuation Without Singularity from Cem Yukse, University of Utah(http://www.cemyuksel.com/research/pointlightattenuation/pointlightattenuation.pdf)
 	//Radius constant is 1.15.
@@ -64,20 +64,20 @@ float distributionGGX(vec3 normalVec, vec3 halfwayVec, float roughness){
 	float NdotH  = max(dot(normalVec, halfwayVec), 0.f);
 	float NdotH2 = NdotH*NdotH;
 	
-	float num   = area2;
-	float denom = (NdotH2 * (area2 - 1.f) + 1.f);
-	denom = PI * denom * denom;
+	float numerator = area2;
+	float denominator = (NdotH2 * (area2 - 1.f) + 1.f);
+	denominator = PI * denominator * denominator;
 	
-	return num / denom;
+	return numerator / denominator;
 }
 float geometrySchlickGGX(float NdotV, float roughness){
 	float r = (roughness + 1.f);
 	float k = (r*r) / 8.f;
 
-	float num = NdotV;
-	float denom = NdotV * (1.f - k) + k;
+	float numerator = NdotV;
+	float denominator  = NdotV * (1.f - k) + k;
 	
-	return num / denom;
+	return numerator / denominator;
 }
 float geometrySmith(vec3 normalVec, vec3 viewDir, vec3 lightDir, float roughness){
 	float NdotV = max(dot(normalVec, viewDir), 0.1);
@@ -106,6 +106,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
 	vec3 specular     = numerator / denominator; 
 
+
 	vec3 kS = fresnel;
 	vec3 kD = vec3(1.0) - kS;
 
@@ -121,7 +122,7 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, 
 	vec3 halfwayVec = normalize(viewDir + lightDir);
   
 	float dist = length(light.pos - worldPos);
-	float attenuation = 1.f / (dist * dist);
+	float attenuation = attenuation(dist);//1.f / (dist * dist);
 	vec3 radiance = light.color * attenuation;
 	
 	vec3 fresnel = fresnelSchlick(max(dot(halfwayVec, viewDir), 0.f), baseReflectivity);
@@ -158,9 +159,9 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 	float NDF = distributionGGX(normal, halfwayVec, roughness);
 	float G   = geometrySmith(normal, viewDir, lightDir, roughness);
 
-	vec3 numerator    = NDF * G * fresnel;
+	vec3 numerator = NDF * G * fresnel;
 	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
-	vec3 specular     = numerator / denominator; 
+	vec3 specular = numerator / denominator; 
 
 	vec3 kS = fresnel;
 	vec3 kD = vec3(1.0) - kS;
@@ -210,7 +211,7 @@ void main(){
 	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 
-	vec3 ambient = vec3(0.03) * sampledAlbedo;
+	vec3 ambient = vec3(0.1) * sampledAlbedo; //vec3(0.03)
 	result += ambient;
 
 	fragOut = vec4(result, 1.f);

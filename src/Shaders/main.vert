@@ -3,6 +3,7 @@ layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoord;
 layout(location = 3) in vec3 inTangent;
+layout(location = 4) in vec3 inBitangent;
 
 out vec3 worldPos;
 
@@ -27,9 +28,10 @@ void main(){
 		TBN = mat3(0.f);
 	else{
 		vec3 T = normalize(normalMatrix * inTangent);
-		
-		T = normalize(T - dot(T, vertNormal) * vertNormal);
-		vec3 B = cross(vertNormal, T); //use bitangent inside model.cpp
+		vec3 B = normalize(normalMatrix * inBitangent);
+		//118
+		//T = normalize(T - dot(T, vertNormal) * vertNormal);
+		//vec3 B = cross(vertNormal, T); use bitangent inside model.cpp
 		
 		TBN = mat3(T, B, vertNormal);
 	}

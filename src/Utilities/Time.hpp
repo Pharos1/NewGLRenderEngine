@@ -1,9 +1,9 @@
 #pragma once
-#include "pch.h"
+#include "../pch.h"
 
-namespace DT {
-	extern float time;
-	extern std::chrono::high_resolution_clock::time_point lastTime;
+namespace Time {
+	extern float deltaTime;
+	extern std::chrono::high_resolution_clock::time_point lastDeltaTime;
 
 	extern float deltaSum;
 	extern std::chrono::high_resolution_clock::time_point lastFPSCount;

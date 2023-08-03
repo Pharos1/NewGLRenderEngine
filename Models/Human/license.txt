@@ -1,0 +1,11 @@
+Model Information:
+* title:	Anime Animated
+* source:	https://sketchfab.com/3d-models/anime-animated-9263ca597dea49bb8bb249f21c7bdc4d
+* author:	reizibarrientos (https://sketchfab.com/reizibarrientos)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Anime Animated" (https://sketchfab.com/3d-models/anime-animated-9263ca597dea49bb8bb249f21c7bdc4d) by reizibarrientos (https://sketchfab.com/reizibarrientos) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

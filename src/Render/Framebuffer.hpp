@@ -1,17 +1,17 @@
 #pragma once
-#include "pch.h"
-#include "Logger.hpp"
+#include "../pch.h"
+#include "../Utilities/Logger.hpp"
 
 class Framebuffer {
 private:
-	GLuint FBO;
-	GLuint RBO;
-	GLuint FBOTexture;
+	GLuint FBO = 0;
+	GLuint RBO = 0;
+	GLuint FBOTexture = 0;
 
 public:
 	GLenum target = GL_TEXTURE_2D;
-	GLsizei width = 0;
-	GLsizei height = 0;
+	GLsizei width = -1;
+	GLsizei height = -1;
 	GLint internalFormat = GL_RGBA; //GL_RGBA16F for HDR
 	GLint format = GL_RGBA;
 	GLint minFilter = GL_LINEAR;

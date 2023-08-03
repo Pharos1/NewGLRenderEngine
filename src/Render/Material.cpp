@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "../pch.h"
 #include "Material.hpp"
-#include "Logger.hpp"
+#include "../Utilities/Logger.hpp"
 
 Material::Material(const char* albedoPath, const char* metallicPath, const char* roughnessPath, const char* normalPath) {
 	if (albedoPath) albedo.loadTexture(albedoPath);
