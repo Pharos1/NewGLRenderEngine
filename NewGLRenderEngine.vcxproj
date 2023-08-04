@@ -274,7 +274,9 @@
     <ClInclude Include="src\Render\Vertex.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\basic.vert" />
+    <None Include="src\Shaders\basicDraw.vert" />
+    <None Include="src\Shaders\basicQuad.vert" />
+    <None Include="src\Shaders\depthPrePass.frag" />
     <None Include="src\Shaders\gradientSkybox.frag" />
     <None Include="src\Shaders\main.frag" />
     <None Include="src\Shaders\main.vert" />
