@@ -1,4 +1,4 @@
-,- (https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#headers) -->
+<!--- https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#headers -->
 # NewGLRenderEngine (Cool name, right?)
 
 ## Features
@@ -10,13 +10,12 @@
 	* Tonemapping
 	* Gamma Correction
 
-
 ## Todo
 * Frustum Culling
 * Deferred Rendering (it is also good match with SSAO)
 * Skyboxes
 * GUI (Dear ImGui)
-* CSM
+* CSM (Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL)
 * Post-Processing
 	* SSAO
 	
@@ -28,5 +27,5 @@
 * Depth Pre-pass
 * PBR Pass
 * Gradient Skybox Pass (It is ugly but better than nothing)
-* Post-Processing pass (all previouse passes were rendered on an HDR framebuffer)
+* Post-Processing pass (all previous passes were rendered on an HDR framebuffer)
 -->
