@@ -30,14 +30,16 @@ Query& Query::operator==(Query&& other) noexcept {
 
 void Query::loadQuery(int type) {
 	this->type = type;
-	if (!id) glGenQueries(1, &id);
+	if (!this->id) glGenQueries(1, &id);
+
+	glBeginQuery(this->type, this->id); //To initialize a query you need to call glBeginQuery
+	glEndQuery(this->type);
 }
 void Query::begin() {
 	if (inUse) {
 		mLog("Attempted to begin a query that is in use!", Log::LogWarning);
 		return;
 	}
-
 	glBeginQuery(this->type, this->id);
 	this->inUse = true;
 }
