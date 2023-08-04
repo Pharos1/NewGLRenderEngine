@@ -24,7 +24,7 @@ void main(){
 	mat3 normalMatrix = transpose(inverse(mat3(model))); //Transpose is really expensive
 	vertNormal = normalize(normalMatrix * inNormal);
 
-	if(inTangent == vec3(0.f))
+	if(inTangent == vec3(0.f) || inBitangent == vec3(0.f))
 		TBN = mat3(0.f);
 	else{
 		vec3 T = normalize(normalMatrix * inTangent);

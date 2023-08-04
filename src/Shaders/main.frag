@@ -181,7 +181,7 @@ void main(){
 	if(texture(albedoTex, texCoord).a < .05f) discard;
 
 	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
-	float sampledMetallic = texture(metallicTex, texCoord).r;
+	float sampledMetallic = texture(metallicTex, texCoord).r; //Using blue as sponza follows some strange convention
 	float sampledRoughness = texture(roughnessTex, texCoord).r;
 	vec3 sampledNormal = texture(normalTex, texCoord).rgb;
 	
