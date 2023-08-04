@@ -21,6 +21,7 @@
 	
 ### Todo for things I am not sure about
 * Check Occlusion Query feature and use it instead for Occlusion Culling
+* Maybe I can remove early-z rejection as deferred will be sufficient enough
 
 <!---
 ## Passes (I have to minimize them, and there will be a lot more)
