@@ -29,7 +29,8 @@ void setupApplication();
 void cleanup();
 
 //Every frame
-void draw();
+void draw(const Shader& shader);
+void renderScene(const Shader& shader);
 
 //Application Specific
 uint32_t scrWidth = 1280;
@@ -44,6 +45,7 @@ Shader lightBoxShader;
 Shader gradientSkyboxShader;
 Shader renderQuadShader;
 Shader postprocShader;
+Shader depthPrePassShader;
 
 //Transformation
 glm::mat4 view;
@@ -186,6 +188,7 @@ int main() {
 		renderPassQuery.begin();
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDepthFunc(GL_LEQUAL);
 
 		//Compute stuff
 		/*auto hightimeLast = std::chrono::high_resolution_clock::now();
@@ -207,24 +210,25 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_5)) postprocShader.set1i("tonemapMode", 5);
 		if (glfwGetKey(window, GLFW_KEY_6)) postprocShader.set1i("tonemapMode", 6);
 
-
-		//Update lights
-		//pointLight.pos = glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
-		//pointLight.set("pointLight", mainShader);
-
-		spotLight.pos = cam.pos;
-		spotLight.dir = cam.front;
-		spotLight.set("spotLight", mainShader);
-
-		//Set shader uniforms
-		mainShader.use();
-		mainShader.setMat4("view", view);
-		mainShader.setVec3("viewPos", cam.pos);
 		//Draw
-		draw();
-		renderPassQuery.end();
+		postprocFB.bind();
+		postprocFB.clear();
+
+		renderScene(depthPrePassShader);
+		draw(mainShader);
+
+		//Post-processing pass
+		postprocFB.unbind();
+
+		postprocShader.use();
+		postprocFB.bindTexture(0);
+		glDepthFunc(GL_LEQUAL);
+		quad.draw();
+		glDepthFunc(GL_LESS);
+		postprocFB.unbindTexture(0);
 
 		//FINALY wait for the frame to finish
+		renderPassQuery.end();
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
@@ -304,10 +308,15 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, scrWidth, scrHeight);
 
 	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
+	
 	mainShader.use();
 	mainShader.setMat4("proj", proj);
+
 	lightBoxShader.use();
 	lightBoxShader.setMat4("proj", proj);
+
+	depthPrePassShader.use();
+	depthPrePassShader.setMat4("proj", proj);
 
 	//Recreate framebuffers
 	postprocFB.create();
@@ -388,9 +397,10 @@ void setupApplication() {
 	//Shaders
 	mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 	lightBoxShader.loadShader("src/Shaders/lightBox.vert", "src/Shaders/lightBox.frag");
-	gradientSkyboxShader.loadShader("src/Shaders/basic.vert", "src/Shaders/gradientSkybox.frag");
-	renderQuadShader.loadShader("src/Shaders/basic.vert", "src/Shaders/renderQuad.frag");
-	postprocShader.loadShader("src/Shaders/basic.vert", "src/Shaders/postproc.frag");
+	gradientSkyboxShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/gradientSkybox.frag");
+	renderQuadShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/renderQuad.frag");
+	postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postproc.frag");
+	depthPrePassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
 
 	//Transformation
 	view = glm::mat4(1.f);
@@ -417,7 +427,7 @@ void setupApplication() {
 	//cerberusModel.meshes[0].material.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
 	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
 
-	//sponzaModel.loadModel("Models/Sponza/sponza.glTF");
+	sponzaModel.loadModel("Models/Sponza/sponza.glTF");
 	humanModel.loadModel("Models/Human/scene.gltf");
 	//ballModel.loadModel("Models/sphere.stl");
 	//ballModel.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
@@ -451,6 +461,9 @@ void setupApplication() {
 	postprocShader.set1f("gamma", 2.2f);
 	postprocShader.set1i("tonemapMode", 5);
 
+	depthPrePassShader.use();
+	depthPrePassShader.setMat4("proj", proj);
+
 	cam.calcFrontVec(); //Update it, so it doesn't jump on start
 
 	//Framebuffers
@@ -469,27 +482,8 @@ void cleanup() {
 }
 
 //Every frame
-void draw() {
-	postprocFB.bind();
-	postprocFB.clear();
-
-	//Scene draw pass
-	//mainShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.002f)));
-	//modelBall.draw(0);
-
-	mainShader.setMat4("model", cerberusModelMat);
-	//cerberusModel.draw(0);
-
-	mainShader.setMat4("model", glm::mat4(1.f));
-	//sponzaModel.draw(0);
-
-	mainShader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.03f)), { -15.f, 1.f, 0.f }));
-	humanModel.draw(0);
-
-	mainShader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.5f)), { 1.5f, 1.f, 0.f }));
-	woodTexture.bind(0);
-	cube.draw();
-	woodTexture.unbind(0);
+void draw(const Shader& shader) {
+	renderScene(shader);
 
 	//Light cube pass
 	lightBoxShader.use();
@@ -503,15 +497,37 @@ void draw() {
 	gradientSkyboxShader.setMat4("view", view);
 	glDepthFunc(GL_LEQUAL);
 	quad.draw();
-	glDepthFunc(GL_LESS);
+}
+void renderScene(const Shader& shader) {
+	shader.use();
+	
+	//Update lights
+	//pointLight.pos = glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
+	//pointLight.set("pointLight", mainShader);
 
-	//Post-processing pass
-	postprocFB.unbind();
+	spotLight.pos = cam.pos;
+	spotLight.dir = cam.front;
+	spotLight.set("spotLight", shader);
 
-	postprocShader.use();
-	postprocFB.bindTexture(0);
-	glDepthFunc(GL_LEQUAL);
-	quad.draw();
-	glDepthFunc(GL_LESS);
-	postprocFB.unbindTexture(0);
+	//Set shader uniforms
+	shader.setMat4("view", view);
+	shader.setVec3("viewPos", cam.pos);
+
+	//Scene draw pass
+	//shader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.002f)));
+	//modelBall.draw(0);
+
+	shader.setMat4("model", cerberusModelMat);
+	//cerberusModel.draw(0);
+
+	shader.setMat4("model", glm::mat4(1.f));
+	sponzaModel.draw(0);
+
+	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.03f)), { -15.f, 1.f, 0.f }));
+	humanModel.draw(0);
+
+	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.5f)), { 1.5f, 1.f, 0.f }));
+	woodTexture.bind(0);
+	cube.draw();
+	woodTexture.unbind(0);
 }
