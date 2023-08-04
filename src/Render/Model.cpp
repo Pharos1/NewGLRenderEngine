@@ -91,7 +91,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
 		loadMaterial(finalMesh.material.albedo, material, aiTextureType_DIFFUSE);
-		loadMaterial(finalMesh.material.normal, material, aiTextureType_HEIGHT);
+		loadMaterial(finalMesh.material.normal, material, aiTextureType_NORMALS);
 		loadMaterial(finalMesh.material.metallic, material, aiTextureType_METALNESS);
 		loadMaterial(finalMesh.material.roughness, material, aiTextureType_DIFFUSE_ROUGHNESS);
 		//loadMaterial(finalMesh.material.AO, material, aiTextureType_LIGHTMAP);
