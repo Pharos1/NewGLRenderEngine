@@ -5,7 +5,7 @@ Query::Query(int type) {
 	loadQuery(type);
 }
 Query::~Query() {
-	mLog(std::string("~Query has been triggered! Hint: Query ID -> ") + std::to_string(this->id), Log::LogDestructorInfo);
+	mLog(std::string("~Query has been triggered! Hint: Query ID -> ") + std::to_string(this->id), Log::LogDestructorInfo, "QUERY");
 	deleteQuery();
 }
 
@@ -37,7 +37,7 @@ void Query::loadQuery(int type) {
 }
 void Query::begin() {
 	if (inUse) {
-		mLog("Attempted to begin a query that is in use!", Log::LogWarning);
+		mLog("Attempted to begin a query that is in use!", Log::LogWarning, "QUERY");
 		return;
 	}
 	glBeginQuery(this->type, this->id);
@@ -45,7 +45,7 @@ void Query::begin() {
 }
 void Query::end() {
 	if (!inUse) {
-		mLog("Attempted to end a query that isn't in use!", Log::LogWarning);
+		mLog("Attempted to end a query that isn't in use!", Log::LogWarning, "QUERY");
 		return;
 	}
 
@@ -56,7 +56,7 @@ void Query::end() {
 }
 bool Query::resultAvailable() const {
 	if (inUse) {
-		mLog("Attempted to get availability of result for a query that is in use!", Log::LogWarning);
+		mLog("Attempted to get availability of result for a query that is in use!", Log::LogWarning, "QUERY");
 		return false;
 	}
 
@@ -66,7 +66,7 @@ bool Query::resultAvailable() const {
 }
 void Query::retrieveResult() {
 	if (inUse) {
-		mLog("Attempted to get result for a query that is in use!", Log::LogWarning);
+		mLog("Attempted to get result for a query that is in use!", Log::LogWarning, "QUERY");
 		return;
 	}
 	//if (resultAvailable()) {
