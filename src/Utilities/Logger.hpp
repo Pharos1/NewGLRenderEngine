@@ -1,7 +1,8 @@
 #pragma once
 #include <iostream>
 
-#define mLog(x, y) Log::log(x, y, __LINE__, __FILE__);
+#define mLog(message, type, location) Log::log(message, type, location, __LINE__, __FILE__);
+#define nLog(message, type, location) Log::log(message, type, location);
 
 namespace Log {
 	enum LogLevel : uint32_t {
@@ -23,5 +24,5 @@ namespace Log {
         bool has(LogLevel flag) const;
     };
 
-	void log(const std::string& message, LogLevel type = LogError, int line = 0, const char* fileName = nullptr);
+	void log(const std::string& message, LogLevel type = LogError, const std::string& location = "", int line = 0, const char* fileName = nullptr);
 };

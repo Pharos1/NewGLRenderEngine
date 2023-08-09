@@ -20,29 +20,33 @@ namespace Log{
 
 	ExcludedLevels excludedLevels(0);
 
-	void log(const std::string& message, LogLevel type, int line, const char* fileName) {
+	void log(const std::string& message, LogLevel type, const std::string& location, int line, const char* fileName) {
 		if (excludedLevels.has(type)) return;
 
 		switch (type) {
 		case LogInfo:
-			std::cerr << "INFO";
+			std::cerr << "[INFO]";
 			break;
 		case LogDestructorInfo:
-			std::cerr << "DESTRUCTOR_INFO";
+			std::cerr << "[DESTRUCTOR_INFO]";
 			break;
 		case LogWarning:
-			std::cerr << "WARNING";
+			std::cerr << "[WARNING]";
 			break;
 		case LogError:
-			std::cerr << "ERROR";
+			std::cerr << "[ERROR]";
 			break;
 		}
+		if (!location.empty()) std::cerr << " [" << location << "]";
 
-		std::cerr << ": " << message;
-		if (fileName)
-			std::cerr << " File '" << fileName << "'.";
-		if(line > 0)
-			std::cerr << " Line " << line << ".";
+		std::cerr << " " << message;
+
+		if (type != LogDestructorInfo) {
+			if (fileName)
+				std::cerr << " File '" << fileName << "'.";
+			if (line > 0)
+				std::cerr << " Line " << line << ".";
+		}
 		std::cerr << std::endl;
 
 		if (type & LogError)
