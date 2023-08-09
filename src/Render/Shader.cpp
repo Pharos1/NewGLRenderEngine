@@ -9,65 +9,63 @@ void Shader::checkCompileErrors(GLuint shader, std::string type) {
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 			if (!success) {
 				glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-				std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << std::endl;
+				nLog(std::string("Shader Compilation Failed. Type: ") + type + ". Info Log: " + infoLog, Log::LogError, "SHADER");
 			}
 		}
 		else {
 			glGetProgramiv(shader, GL_LINK_STATUS, &success);
 			if (!success) {
 				glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-				std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << std::endl;
+				nLog(std::string("Program Linking Failed. Info Log: ") + infoLog, Log::LogError, "SHADER");
 			}
 		}
 	}
 
-void Shader::loadShader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
-	//MODIFIED VERSION OF LEARNOPENGL.COM's SHADER LOADING
-	std::string vertexContent;
-	std::string fragmentContent;
-	std::string geometryContent;
-	std::ifstream vShaderFile;
-	std::ifstream fShaderFile;
-	std::ifstream gShaderFile;
+void Shader::loadShader(const std::string& vPath, const std::string& fPath, const std::string& gPath) {
+	std::string vContent;
+	std::string fContent;
+	std::string gContent;
 
-	vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	try {
-		vShaderFile.open(vertexPath);
-		fShaderFile.open(fragmentPath);
+	std::ifstream vShaderFile, fShaderFile, gShaderFile;
+	std::stringstream vShaderStream, fShaderStream, gShaderStream;
 
-		std::stringstream vShaderStream, fShaderStream;
+	vShaderFile.open(vPath);
+	fShaderFile.open(fPath);
+	if (!gPath.empty()) gShaderFile.open(gPath);
 
-		vShaderStream << vShaderFile.rdbuf();
-		fShaderStream << fShaderFile.rdbuf();
+	if (!vShaderFile.is_open())
+		nLog(std::string("File '") + vPath + "' " + "not successfully opened!", Log::LogError, "SHADER");
 
-		vShaderFile.close();
-		fShaderFile.close();
+	if (!fShaderFile.is_open())
+		nLog(std::string("File '") + fPath + "' " + "not successfully opened!", Log::LogError, "SHADER");
 
-		vertexContent = vShaderStream.str();
-		fragmentContent = fShaderStream.str();
-
-		if (geometryPath != nullptr) {
-			gShaderFile.open(geometryPath);
-			std::stringstream gShaderStream;
-			gShaderStream << gShaderFile.rdbuf();
-			gShaderFile.close();
-			geometryContent = gShaderStream.str();
-		}
-	}
-	catch (std::ifstream::failure e) {
-		mLog(std::string("Shader file not successfully read! Ifstream failure message: ") + e.what(), Log::LogError);
+	if (!gPath.empty()) {
+		if (!gShaderFile.is_open())
+			nLog(std::string("File '") + gPath + "' " + "not successfully opened!", Log::LogError, "SHADER");
 	}
 
-	//Define shaders
-	const char* vShaderContent = vertexContent.c_str();
-	const char* fShaderContent = fragmentContent.c_str();
-	const char* gShaderContent = geometryContent.c_str();
 
+	vShaderStream << vShaderFile.rdbuf();
+	fShaderStream << fShaderFile.rdbuf();
+	gShaderStream << gShaderFile.rdbuf();
+
+	vContent = vShaderStream.str();
+	fContent = fShaderStream.str();
+	gContent = gShaderStream.str();
+
+	vShaderFile.close(); //Yes! I know about RAII, but ignore that, if you even saw it.
+	fShaderFile.close();
+	gShaderFile.close();
+
+	const char* vShaderContent = vContent.c_str();
+	const char* fShaderContent = fContent.c_str();
+	const char* gShaderContent = gContent.c_str();
+
+	//Now to the GL objects
 	GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
-	GLuint geometry = (geometryPath != nullptr) ? glCreateShader(GL_GEOMETRY_SHADER) : 0;
+	GLuint geometry = (gPath.empty()) ? 0 : glCreateShader(GL_GEOMETRY_SHADER);
+
 	int success;
 	char infoLog[512];
 
@@ -81,43 +79,45 @@ void Shader::loadShader(const char* vertexPath, const char* fragmentPath, const 
 	glCompileShader(fragment);
 	checkCompileErrors(fragment, "FRAGMENT");
 
-	if (geometryPath != nullptr) {
-		const char* gShaderCode = geometryContent.c_str();
+	if (!gPath.empty()) {
 		geometry = glCreateShader(GL_GEOMETRY_SHADER);
-		glShaderSource(geometry, 1, &gShaderCode, NULL);
+		glShaderSource(geometry, 1, &gShaderContent, NULL);
 		glCompileShader(geometry);
 		checkCompileErrors(geometry, "GEOMETRY");
 	}
 
 	//Define shader program
-	if (!id) id = glCreateProgram(); //If it doesn't have an id just give it
+	if (!id) id = glCreateProgram();
 
 	glAttachShader(id, vertex);
 	glAttachShader(id, fragment);
-	if (geometryPath != nullptr) glAttachShader(id, geometry);
+	if (!gPath.empty()) glAttachShader(id, geometry);
 	glLinkProgram(id);
 
 	//Check for errors
 	glGetProgramiv(id, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(id, 512, NULL, infoLog);
-		mLog(std::string("Program linking failed! Reason: ") + infoLog, Log::LogError);
+		mLog(std::string("Program linking failed! Reason: ") + infoLog, Log::LogError, "SHADER");
 	}
 
 	//Clear the shader after they are linked
 	glDetachShader(id, vertex);
-	glDetachShader(id, fragment);
-	if (geometryPath != nullptr) glDetachShader(id, geometry);
-
 	glDeleteShader(vertex);
+
+	glDetachShader(id, fragment);
 	glDeleteShader(fragment);
-	if (geometryPath != nullptr) glDeleteShader(geometry);
+
+	if (!gPath.empty()) {
+		glDetachShader(id, geometry);
+		glDeleteShader(geometry);
+	}
 }
 Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
 	loadShader(vertexPath, fragmentPath, geometryPath);
 };
 Shader::~Shader() {
-	mLog("~Shader has been triggered. Hint: Shader Program ID -> " + std::to_string(id), Log::LogDestructorInfo);
+	mLog("~Shader has been triggered. Hint: Shader Program ID -> " + std::to_string(id), Log::LogDestructorInfo, "SHADER");
 	deleteProgram();
 }
 

@@ -9,7 +9,7 @@ private:
 	void checkCompileErrors(GLuint shader, std::string type);
 
 public:
-	void loadShader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
+	void loadShader(const std::string& vPath, const std::string& fPath, const std::string& gPath = "");
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
 	Shader() = default;
 	~Shader();
