@@ -11,5 +11,17 @@ namespace Time {
 	extern double avgMsTime;
 	extern uint32_t frameCount;
 
-	void update();
+	void updateDelta();
 }
+class Timer {
+public:
+	std::chrono::high_resolution_clock::time_point startTime;
+	std::string name;
+
+	Timer(const std::string& name);
+	Timer() = default;
+	~Timer();
+
+	Timer(const Timer&) = delete;
+	Timer& operator=(const Timer&) = delete;
+};

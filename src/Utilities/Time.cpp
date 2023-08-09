@@ -11,7 +11,7 @@ namespace Time {
 	double avgMsTime = 0;
 	uint32_t frameCount = 0;
 
-	void update() {
+	void updateDelta() {
 		auto now = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(now - lastDelta).count();
 
@@ -31,4 +31,13 @@ namespace Time {
 			frameCount += 1;
 		}
 	}
+}
+Timer::Timer(const std::string& name){
+	startTime = std::chrono::high_resolution_clock::now();
+	this->name = name;
+}
+Timer::~Timer(){
+	auto now = std::chrono::high_resolution_clock::now();
+	auto took = std::chrono::duration<float, std::chrono::milliseconds::period>(now - startTime);
+	std::cout << "[Timer] '" << name << "' took " << took << std::endl;
 }
