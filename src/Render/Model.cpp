@@ -14,7 +14,7 @@ void Model::loadModel(const std::string& path) {
 	const aiScene* scene = importer.ReadFile(path, aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcessPreset_TargetRealtime_Fast); //aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-		mLog(std::string("Failed to load model at path '") + path + "'. ASSIMP error string: " + importer.GetErrorString(), Log::LogError);
+		mLog(std::string("Failed to load model at path '") + path + "'. ASSIMP error string: " + importer.GetErrorString(), Log::LogError, "MODEL");
 		return;
 	}
 	directory = path.substr(0, path.find_last_of("/\\"));

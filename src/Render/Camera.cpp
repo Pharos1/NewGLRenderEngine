@@ -5,6 +5,7 @@
 
 Camera::Camera(glm::vec3 pos, float speed, float mouseSensitivity)
 	: pos(pos), speed(speed), mouseSensitivity(mouseSensitivity){
+	calcFrontVec();
 }
 
 const glm::mat4& Camera::getView() const {

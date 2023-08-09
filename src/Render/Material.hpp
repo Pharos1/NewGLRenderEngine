@@ -13,7 +13,7 @@ public:
 	Material() = default;
 
 	void bind(int firstTextureUnit) const;
-	void unbind(int firstTextureUnit) const;
+	void unbind() const;
 	void deleteMaterial();
 
 	bool empty() const;

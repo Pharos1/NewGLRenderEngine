@@ -54,6 +54,6 @@ void Mesh::draw(uint32_t firstTextureUnit) const {
 	glBindVertexArray(0);
 
 	if (!material.empty()) {
-		material.unbind(firstTextureUnit);
+		material.unbind();
 	}
 }

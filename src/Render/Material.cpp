@@ -15,14 +15,14 @@ void Material::bind(int firstTextureUnit) const {
 	roughness.bind(firstTextureUnit + 2);
 	normal.bind(firstTextureUnit + 3);
 }
-void Material::unbind(int firstTextureUnit) const {
-	albedo.unbind(firstTextureUnit);
-	metallic.unbind(firstTextureUnit + 1);
-	roughness.unbind(firstTextureUnit + 2);
-	normal.unbind(firstTextureUnit + 3);
+void Material::unbind() const {
+	albedo.unbind();
+	metallic.unbind();
+	roughness.unbind();
+	normal.unbind();
 }
 void Material::deleteMaterial() {
-	mLog(std::string("Function 'deleteMaterial()' of class Material has been triggered! Ensure that all resources are properly handled. Hint: Albedo Texture ID -> ") + std::to_string(albedo.getID()), Log::LogInfo);
+	mLog(std::string("Function 'deleteMaterial()' of class Material has been triggered! Ensure that all resources are properly handled. Hint: Albedo Texture ID -> ") + std::to_string(albedo.getID()), Log::LogInfo, "MATERIAL");
 	
 	albedo.deleteTexture();
 	metallic.deleteTexture();
