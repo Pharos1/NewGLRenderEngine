@@ -276,6 +276,7 @@
   <ItemGroup>
     <None Include="src\Shaders\basicDraw.vert" />
     <None Include="src\Shaders\basicQuad.vert" />
+    <None Include="src\Shaders\deferred.frag" />
     <None Include="src\Shaders\depthPrePass.frag" />
     <None Include="src\Shaders\gradientSkybox.frag" />
     <None Include="src\Shaders\main.frag" />
