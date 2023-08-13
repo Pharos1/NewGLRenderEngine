@@ -18,6 +18,8 @@ public:
 	GLint minFilter = GL_LINEAR;
 	GLint magFilter = GL_LINEAR;
 	GLint RBOFormat = GL_DEPTH24_STENCIL8; //0 for disabled
+	GLuint dataType = GL_UNSIGNED_BYTE;
+	GLuint useTextureAs = GL_COLOR_ATTACHMENT0;
 
 	Framebuffer(GLsizei width, GLsizei height);
 	Framebuffer() = default;
@@ -30,8 +32,8 @@ public:
 	Framebuffer& operator=(Framebuffer&& other) noexcept;
 
 	void create();
-	void bind() const;
-	void unbind() const;
-	void clear() const;
+	void bind(GLuint target = GL_FRAMEBUFFER) const;
+	static void unbind(GLuint target = GL_FRAMEBUFFER);
+	static void clear();
 	void deleteFramebuffer();
 };

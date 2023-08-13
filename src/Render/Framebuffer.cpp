@@ -58,17 +58,19 @@ void Framebuffer::create() {
 	createInfo.magFilter = magFilter;
 	createInfo.width = width;
 	createInfo.height = height;
-	createInfo.noData = true;
+	createInfo.noImage = true;
 	createInfo.internalFormat = internalFormat;
 	createInfo.format = format;
 	createInfo.generateMipmap = false;
+	createInfo.dataType = dataType;
+
 	FBOTexture.loadTexture("", createInfo);
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 	FBOTexture.bind(0);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FBOTexture.getID(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, useTextureAs, GL_TEXTURE_2D, FBOTexture.getID(), 0);
 
 	if (RBOFormat) {
 		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
@@ -84,13 +86,13 @@ void Framebuffer::create() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	FBOTexture.unbind();
 }
-void Framebuffer::bind() const {
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+void Framebuffer::bind(GLuint target) const {
+	glBindFramebuffer(target, FBO);
 }
-void Framebuffer::unbind() const {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+void Framebuffer::unbind(GLuint target) {
+	glBindFramebuffer(target, 0);
 }
-void Framebuffer::clear() const {
+void Framebuffer::clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 void Framebuffer::deleteFramebuffer() {
