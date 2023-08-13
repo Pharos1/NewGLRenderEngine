@@ -204,7 +204,6 @@ int main() {
 
 			lastTime = now;
 		}
-		renderPassQuery.begin();
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthFunc(GL_LEQUAL);
@@ -235,18 +234,25 @@ int main() {
 		postprocFB.bind();
 		postprocFB.clear();
 
+		depthPassQuery.begin();
 		renderScene(depthPrePassShader);
+		depthPassQuery.end();
+
+		renderPassQuery.begin();
 		draw(mainShader);
+		renderPassQuery.end();
 
 		//Post-processing pass
 		postprocFB.unbind();
 
+		postprocQuery.begin();
 		postprocShader.use();
 		postprocFB.FBOTexture.bind(0);
 		glDepthFunc(GL_LEQUAL);
 		quad.draw();
 		glDepthFunc(GL_LESS);
 		postprocFB.FBOTexture.unbind();
+		postprocQuery.end();
 
 		//FINALY wait for the frame to finish
 		glfwPollEvents();
@@ -511,6 +517,22 @@ void setupApplication() {
 	//Queries
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
 
+}
+void setupScreenRelated() {
+	mainShader.use();
+	mainShader.setMat4("proj", proj);
+
+	lightBoxShader.use();
+	lightBoxShader.setMat4("proj", proj);
+
+	depthPrePassShader.use();
+	depthPrePassShader.setMat4("proj", proj);
+
+	//Framebuffers
+	postprocFB.internalFormat = GL_RGBA16F;
+	postprocFB.width = scrWidth;
+	postprocFB.height = scrHeight;
+	postprocFB.create();
 }
 void cleanup() {
 	glfwTerminate();
