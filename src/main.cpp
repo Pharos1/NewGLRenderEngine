@@ -242,18 +242,18 @@ int main() {
 		postprocFB.unbind();
 
 		postprocShader.use();
-		postprocFB.bindTexture(0);
+		postprocFB.FBOTexture.bind(0);
 		glDepthFunc(GL_LEQUAL);
 		quad.draw();
 		glDepthFunc(GL_LESS);
-		postprocFB.unbindTexture(0);
+		postprocFB.FBOTexture.unbind();
 
 		//FINALY wait for the frame to finish
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
 
-	mLog("Application stopped.", Log::LogInfo);
+	mLog("Application stopped.", Log::LogInfo, "");
 	cleanup();
 	return 0;
 }
