@@ -26,6 +26,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 //On Application Start/End
 void initDependencies();
 void setupApplication();
+void setupScreenRelated();
 void cleanup();
 
 //Every frame
@@ -46,6 +47,7 @@ Shader gradientSkyboxShader;
 Shader renderQuadShader;
 Shader postprocShader;
 Shader depthPrePassShader;
+Shader deferredShader;
 
 //Transformation
 glm::mat4 view;
@@ -70,6 +72,9 @@ SpotLight spotLight;
 
 //Textures
 Texture woodTexture;
+Texture checkerboardTexture;
+Texture noiseTexture;
+//Texture gPosition, gNormal, gAlbedo;
 
 //Camera
 float fov = 45.f;
@@ -158,16 +163,18 @@ std::vector<Vertex> quadVerts = {
 	{{-1.f, 1.f, 0.f}, { 0.f, 0.f, 1.f}, {0.f, 1.f}},
 };
 std::vector<Vertex> planeVerts = {
-	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f, 0.f}},
-	{{ 1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {1.f, 1.f}},
-	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f, 1.f}},
-	{{-1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {0.f, 0.f}},
-	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f, 0.f}},
-	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f, 1.f}},
+	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f*1000, 0.f*1000}},
+	{{ 1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {1.f*1000, 1.f*1000}},
+	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f*1000, 1.f*1000}},
+	{{-1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {0.f*1000, 0.f*1000}},
+	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f*1000, 0.f*1000}},
+	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f*1000, 1.f*1000}},
 };
 
 //Queries
+Query depthPassQuery;
 Query renderPassQuery;
+Query postprocQuery;
 
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
@@ -180,9 +187,21 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		double now = glfwGetTime();
 		
-		if (now - lastTime > 1) {
+		if (now - lastTime > 0.5) {
+			depthPassQuery.retrieveResult();
 			renderPassQuery.retrieveResult();
-			std::cout << (double)renderPassQuery.getResult() / 1000000 << "  |  " << Time::avgMsTime << "\n";
+			postprocQuery.retrieveResult();
+
+			double depthTime = (double)depthPassQuery.getResult() / 1000000;
+			double renderTime = (double)renderPassQuery.getResult() / 1000000;
+			double postprocTime = (double)postprocQuery.getResult() / 1000000;
+
+			std::cout << "Depth pre-pass: " << depthTime << "ms  |  ";
+			std::cout << "Render Pass: " << renderTime << "ms  |  ";
+			std::cout << "Post-Processing Pass: " << postprocTime << "ms  |  ";
+			std::cout << "Summed query time: " << depthTime + renderTime + postprocTime << "ms  |  ";
+			std::cout << "Chrono Frame Time: " << Time::avgMsTime << "ms\n";
+
 			lastTime = now;
 		}
 		renderPassQuery.begin();
@@ -190,13 +209,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthFunc(GL_LEQUAL);
 
-		//Compute stuff
-		/*auto hightimeLast = std::chrono::high_resolution_clock::now();
-		auto highnow = std::chrono::high_resolution_clock::now();
-		std::cout << std::chrono::duration<float, std::chrono::milliseconds::period>(highnow - hightimeLast).count() << "\n";
-		*/
-
-		Time::update();
+		Time::updateDelta();
 		cam.processInput(window);
 		view = cam.getView();
 
@@ -209,6 +222,14 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_4)) postprocShader.set1i("tonemapMode", 4);
 		if (glfwGetKey(window, GLFW_KEY_5)) postprocShader.set1i("tonemapMode", 5);
 		if (glfwGetKey(window, GLFW_KEY_6)) postprocShader.set1i("tonemapMode", 6);
+
+		//Update lights
+		//pointLight.pos = glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
+		//pointLight.set("pointLight", mainShader);
+
+		spotLight.pos = cam.pos;
+		spotLight.dir = cam.front;
+		spotLight.set("spotLight", mainShader);
 
 		//Draw
 		postprocFB.bind();
@@ -228,7 +249,6 @@ int main() {
 		postprocFB.unbindTexture(0);
 
 		//FINALY wait for the frame to finish
-		renderPassQuery.end();
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
@@ -319,7 +339,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	depthPrePassShader.setMat4("proj", proj);
 
 	//Recreate framebuffers
-	postprocFB.create();
+	setupScreenRelated();
 }
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	cam.processMouse(xpos, ypos);
@@ -345,7 +365,7 @@ void initDependencies() {
 	window = glfwCreateWindow(scrWidth, scrHeight, "GLRenderEngine", NULL, NULL); //Change the first null to glfwGetPrimaryMonitor() for fullscreen
 
 	if (window == NULL) {
-		mLog("Failed to create a window", Log::LogError);
+		nLog("Failed to create a window", Log::LogError, "");
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -357,12 +377,8 @@ void initDependencies() {
 	//}
 
 	GLenum err = glewInit();
-	if (err != GLEW_OK) {
-		std::string st = "Glew Error: ";
-		st += (const char*)glewGetErrorString(GLEW_OK);
-
-		Log::log(st, Log::LogError, __LINE__);
-	}
+	if (err != GLEW_OK)
+		nLog(std::string("Glew Error: ") + (const char*)glewGetErrorString(GLEW_OK), Log::LogError, "");
 
 	//Debugging
 	int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
@@ -401,6 +417,7 @@ void setupApplication() {
 	renderQuadShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/renderQuad.frag");
 	postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postproc.frag");
 	depthPrePassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
+	deferredShader.loadShader("src/Shaders/main.vert", "src/Shaders/deferred.frag");
 
 	//Transformation
 	view = glm::mat4(1.f);
@@ -433,12 +450,13 @@ void setupApplication() {
 	//ballModel.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
 
 	//Lights
-	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(7.f * 0));
-	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3(10.f + 5));
-	spotLight = SpotLight(cam.pos, cam.front, glm::vec3(20.f + 60.f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
+	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(7.f * 1));
+	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3((10.f + 5) * 1));
+	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f) * 1), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 
 	//Textures
-	woodTexture.loadTexture("Textures/Other/Wood.png");
+	woodTexture.loadTexture("Textures/Other/Wood.png", TextureCreateInfo());
+	checkerboardTexture.loadTexture("Textures/Props/Checkerboard.jpg", TextureCreateInfo());
 
 	//Uniforms and stuff
 	mainShader.use();
@@ -451,6 +469,10 @@ void setupApplication() {
 	pointLight.set("pointLight", mainShader);
 	spotLight.set("spotLight", mainShader);
 
+	mainShader.use();
+	mainShader.setMat4("model", glm::mat4(1.f));
+	mainShader.setMat4("view", view);
+
 	lightBoxShader.use();
 	lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
 	lightBoxShader.setMat4("view", view);
@@ -460,6 +482,19 @@ void setupApplication() {
 	postprocShader.set1b("gammaOn", true);
 	postprocShader.set1f("gamma", 2.2f);
 	postprocShader.set1i("tonemapMode", 5);
+
+	//Queries
+	depthPassQuery.loadQuery(GL_TIME_ELAPSED);
+	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
+	postprocQuery.loadQuery(GL_TIME_ELAPSED);
+
+	//Framebuffers
+	setupScreenRelated();
+	mainShader.use();
+	mainShader.setMat4("proj", proj);
+
+	lightBoxShader.use();
+	lightBoxShader.setMat4("proj", proj);
 
 	depthPrePassShader.use();
 	depthPrePassShader.setMat4("proj", proj);
@@ -495,7 +530,7 @@ void draw(const Shader& shader) {
 	//Ugly skybox pass
 	gradientSkyboxShader.use();
 	gradientSkyboxShader.setMat4("view", view);
-	glDepthFunc(GL_LEQUAL);
+
 	quad.draw();
 }
 void renderScene(const Shader& shader) {
@@ -526,8 +561,13 @@ void renderScene(const Shader& shader) {
 	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.03f)), { -15.f, 1.f, 0.f }));
 	humanModel.draw(0);
 
+	shader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(1000.f)));
+	checkerboardTexture.bind(0);
+	plane.draw();
+	checkerboardTexture.unbind();
+
 	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.5f)), { 1.5f, 1.f, 0.f }));
 	woodTexture.bind(0);
 	cube.draw();
-	woodTexture.unbind(0);
+	woodTexture.unbind();
 }
