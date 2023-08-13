@@ -25,13 +25,13 @@ public:
 	void unuse() const;
 	void deleteProgram();
 
-	void set1b(const std::string& name, bool value) const;
-	void set1i(const std::string& name, int value) const;
-	void set1ui(const std::string& name, uint32_t value) const;
-	void set1f(const std::string& name, float value) const;
-	void setMat3(const std::string& name, const glm::mat3& mat3) const;
-	void setMat4(const std::string& name, const glm::mat4& mat4) const;
-	void setVec2(const std::string& name, const glm::vec2& vec2) const;
-	void setVec3(const std::string& name, const glm::vec3& vec3) const;
-	void setVec4(const std::string& name, const glm::vec4& vec4) const;
+	void set1b(const std::string& name, bool value, const int count = 1) const;
+	void set1i(const std::string& name, int value, const int count = 1) const;
+	void set1ui(const std::string& name, uint32_t value, const int count = 1) const;
+	void set1f(const std::string& name, float value, const int count = 1) const;
+	void setMat3(const std::string& name, const glm::mat3& mat, const int count = 1) const;
+	void setMat4(const std::string& name, const glm::mat4& mat, const int count = 1) const;
+	void setVec2(const std::string& name, const glm::vec2& vec, const int count = 1) const;
+	void setVec3(const std::string& name, const glm::vec3& vec, const int count = 1) const;
+	void setVec4(const std::string& name, const glm::vec4& vec, const int count = 1) const;
 };
