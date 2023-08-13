@@ -14,7 +14,8 @@ struct TextureCreateInfo {
 	bool invertY = true;
 	int width = 0;
 	int height = 0;
-	bool noData = false;
+	void* data = nullptr;
+	bool noImage = false;
 	bool generateMipmap = true;
 };
 class Texture {

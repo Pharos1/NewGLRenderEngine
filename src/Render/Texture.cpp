@@ -39,7 +39,7 @@ void Texture::bind(const GLuint textureUnit) const {
 	glActiveTexture(GL_TEXTURE0 + textureUnit);
 	glBindTexture(type, id);
 }
-void Texture::unbind() const {
+void Texture::unbind() const{
 	glBindTexture(type, 0);
 }
 void Texture::deleteTexture() {
@@ -72,15 +72,16 @@ void Texture::loadTexture(const std::string& path, const TextureCreateInfo& crea
 
 	stbi_set_flip_vertically_on_load(createInfo.invertY);
 
-	if (!createInfo.noData)
+	if (!createInfo.noImage)
 		data = stbi_load(this->path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 	else {
 		width = createInfo.width;
 		height = createInfo.height;
+		data = (unsigned char*) createInfo.data;
 	}
 	//this->id = path.empty() ? 0 : SOIL_load_OGL_texture(this->path.c_str(), SOIL_LOAD_RGBA, this->id, invertY ? SOIL_FLAG_INVERT_Y : 0);
 
-	if (data || createInfo.noData) {
+	if (data || createInfo.noImage) {
 		glBindTexture(createInfo.type, this->id);
 		glTexParameteri(createInfo.type, GL_TEXTURE_WRAP_S, createInfo.wrapX); //Note: When using transparency its good to use GL_CLAMP_TO_EDGE instead of GL_REPEAT to prevent interpolation of colors on the top of the texture
 		glTexParameteri(createInfo.type, GL_TEXTURE_WRAP_T, createInfo.wrapY); //and here also
@@ -95,7 +96,7 @@ void Texture::loadTexture(const std::string& path, const TextureCreateInfo& crea
 		mLog(std::string("Failed to load a texture with path '") + this->path + "'. Last SOIL result: " + SOIL_last_result() + ".", Log::LogError, "TEXTURE");
 
 	glBindTexture(createInfo.type, 0); //Unbind
-	stbi_image_free(data);
+	if(!createInfo.noImage) stbi_image_free(data);
 }
 bool Texture::empty() const {
 	return !this->id;

@@ -24,6 +24,7 @@ struct SpotLight{
 	float cutOff;
 	float outerCutOff;
 };
+
 uniform DirLight dirLight;
 uniform PointLight pointLight;
 uniform SpotLight spotLight;
@@ -34,10 +35,10 @@ layout(binding = 1) uniform sampler2D metallicTex;
 layout(binding = 2) uniform sampler2D roughnessTex;
 layout(binding = 3) uniform sampler2D normalTex;
 
-vec3 getNormalFromMap(){
-	vec3 tangentNormal = texture(normalTex, texCoord).xyz * 2.f - 1.f;
-	return normalize(TBN * tangentNormal);
-}
+//layout(binding = 0) uniform sampler2D gPositionBuffer;
+//layout(binding = 1) uniform sampler2D gNormalBuffer;
+//layout(binding = 2) uniform sampler2D gAlbedoBuffer;
+
 float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent, float metallicValue){
 	vec3 halfwayVec = normalize(lightDir + viewDir);
 
@@ -52,7 +53,10 @@ float attenuation(float dist){
 	attenuation *= (1.f - dist/sqrt((dist*dist) + radiusSquared));
 	return attenuation;
 }
-
+vec3 getNormalFromMap(){
+	vec3 tangentNormal = texture(normalTex, texCoord).xyz * 2.f - 1.f;
+	return normalize(TBN * tangentNormal);
+}
 
 vec3 fresnelSchlick(float cosTheta, vec3 baseReflectivity){
 	return baseReflectivity + (1.f - baseReflectivity) * pow(clamp(1.f - cosTheta, 0.f, 1.f), 5.f);
@@ -184,7 +188,7 @@ void main(){
 	float sampledMetallic = texture(metallicTex, texCoord).r; //Using blue as sponza follows some strange convention
 	float sampledRoughness = texture(roughnessTex, texCoord).r;
 	vec3 sampledNormal = texture(normalTex, texCoord).rgb;
-	
+
 	vec3 fragNormal;
 	if(sampledNormal != vec3(0.f) && TBN != mat3(0.f)){
 		fragNormal = getNormalFromMap();
@@ -193,14 +197,18 @@ void main(){
 		fragNormal = normalize(vertNormal);
 	}
 
-	vec3 viewDir = normalize(viewPos - worldPos);
+	/*vec4 gPosition = texture(gPositionBuffer, texCoord);
+	vec4 gNormal = texture(gNormalBuffer, texCoord);
+	vec3 gAlbedo = texture(gAlbedoBuffer, texCoord).rgb;
 
-	//vec3 result = calcDirLight(dirLight, fragNormal, viewDir, specularExponent, sampledAlbedo, sampledMetallic);
-	//result += calcPointLight(pointLight, fragNormal, viewDir, specularExponent, sampledAlbedo, sampledMetallic, worldPos);
-	//result += calcSpotLight(spotLight, fragNormal, viewDir, specularExponent, sampledAlbedo, sampledMetallic, worldPos);
-	
-	//vec3 ambient = vec3(0.05f);
-	//result += ambient * sampledAlbedo;
+	vec3 sampledAlbedo = pow(gAlbedo, vec3(2.2f));
+	float sampledMetallic = gPosition.a;
+	float sampledRoughness = gNormal.a;
+	vec3 fragNormal = gNormal.rgb;
+	vec3 worldPos = gPosition.rgb;
+	*/
+
+	vec3 viewDir = normalize(viewPos - worldPos);
 
 	
 	vec3 baseReflectivity = vec3(0.04);
@@ -210,9 +218,6 @@ void main(){
 	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
-
-	vec3 ambient = vec3(0.1) * sampledAlbedo; //vec3(0.03)
-	result += ambient;
 
 	fragOut = vec4(result, 1.f);
 }
