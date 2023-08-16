@@ -6,6 +6,7 @@
 * Occlusion Culling with Depth Pre-pass (Early-Z Rejection)
 * Directional, Omnidirectional and Spot Lights
 * Model Loading with ASSIMP
+* Texture loading with STBI
 * Post-Processing (HDR)
 	* Tonemapping
 	* Gamma Correction
@@ -18,6 +19,11 @@
 * CSM (Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL)
 * Post-Processing
 	* SSAO
+* Texture reuse optimization for models.
+
+## Simple TODOs
+* Make texture class manage only the ogl resources, not the path and others.
+* Make normal timer and scoped timers different classes
 	
 ### Todo for things I am not sure about
 * Check Occlusion Query feature and use it instead for Occlusion Culling

@@ -176,6 +176,9 @@ Query depthPassQuery;
 Query renderPassQuery;
 Query postprocQuery;
 
+//Multi-threading
+std::mutex mutexLock;
+
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
 
@@ -184,6 +187,7 @@ int main() {
 	setupApplication();
 
 	double lastTime = 0;
+
 	while (!glfwWindowShouldClose(window)) {
 		double now = glfwGetTime();
 		
@@ -221,6 +225,17 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_4)) postprocShader.set1i("tonemapMode", 4);
 		if (glfwGetKey(window, GLFW_KEY_5)) postprocShader.set1i("tonemapMode", 5);
 		if (glfwGetKey(window, GLFW_KEY_6)) postprocShader.set1i("tonemapMode", 6);
+
+		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) spotLight.color = glm::vec3(0);
+		else spotLight.color = glm::vec3(80);
+		if (!glfwGetKey(window, GLFW_KEY_F)) dirLight.color = glm::vec3(0);
+		else dirLight.color = glm::vec3(5);
+		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) pointLight.color = glm::vec3(0);
+		else pointLight.color = glm::vec3(15);
+
+		spotLight.set("spotLight", mainShader);
+		dirLight.set("dirLight", mainShader);
+		pointLight.set("pointLight", mainShader);
 
 		//Update lights
 		//pointLight.pos = glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
@@ -450,13 +465,31 @@ void setupApplication() {
 	//cerberusModel.meshes[0].material.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
 	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
 
+	auto loadSponz = []() {
+		sponzaModel.loadModel("Models/Sponza/sponza.glTF");
+	};
+	auto loadHuman = []() {
+		humanModel.loadModel("Models/Human/scene.gltf");
+	};
+
 	sponzaModel.loadModel("Models/Sponza/sponza.glTF");
 	humanModel.loadModel("Models/Human/scene.gltf");
+	//loadSponz();
+	//loadHuman();
+
+	//{
+	//	std::lock_guard<std::mutex> lock(mutexLock);
+	//	Timer time("Heyl");
+	//std::jthread thread(loadSponz);
+	//std::jthread thread2(loadHuman);
+	//thread.join();
+	//thread2.join();
+	//}
 	//ballModel.loadModel("Models/sphere.stl");
 	//ballModel.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
 
 	//Lights
-	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(7.f * 1));
+	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(5.f * 0));
 	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3((10.f + 5) * 1));
 	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f) * 1), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 
@@ -494,25 +527,9 @@ void setupApplication() {
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
 	postprocQuery.loadQuery(GL_TIME_ELAPSED);
 
-	//Framebuffers
 	setupScreenRelated();
-	mainShader.use();
-	mainShader.setMat4("proj", proj);
-
-	lightBoxShader.use();
-	lightBoxShader.setMat4("proj", proj);
-
-	depthPrePassShader.use();
-	depthPrePassShader.setMat4("proj", proj);
 
 	cam.calcFrontVec(); //Update it, so it doesn't jump on start
-
-	//Framebuffers
-	//Post-processing HDR framebuffer
-	postprocFB.internalFormat = GL_RGBA16F;
-	postprocFB.width = scrWidth;
-	postprocFB.height = scrHeight;
-	postprocFB.create();
 
 	//Queries
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);

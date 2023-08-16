@@ -1,5 +1,6 @@
 #include "../pch.h"
 #include "../Utilities/Logger.hpp"
+#include "../Utilities/Time.hpp"
 #include "Texture.hpp"
 
 Texture::Texture(const char* path, const TextureCreateInfo& createInfo) {
@@ -62,7 +63,8 @@ void Texture::loadTexture(const std::string& path, const TextureCreateInfo& crea
 
 	this->path = path;
 	this->type = createInfo.type;
-	if (empty()) glGenTextures(1, &this->id);
+	bool some = empty();
+	if (some) glGenTextures(1, &this->id);
 	
 	unsigned char* data = nullptr;
 

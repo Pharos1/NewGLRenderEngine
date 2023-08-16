@@ -12,6 +12,8 @@ public:
 	std::vector<Texture> loadedTextures;
 	std::vector<Mesh> meshes;
 	std::string directory;
+	std::mutex mLock;
+	std::vector<std::future<void>> futures;
 
 	Model(std::string const& path);
 	Model() = default;

@@ -1,14 +1,13 @@
 #include "../pch.h"
 #include "Mesh.hpp"
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
-		: verticesSize(static_cast<int>(vertices.size())), indicesSize(static_cast<int>(indices.size())) {
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
 	create(vertices, indices);
 }
 
 void Mesh::create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
-	verticesSize = static_cast<int>(vertices.size());
-	indicesSize = indices.empty() ? 0 : static_cast<int>(indices.size());
+	verticesSize = static_cast<int>(vertices.capacity());
+	indicesSize = indices.empty() ? 0 : static_cast<int>(indices.capacity());
 
 	if(!VAO) glGenVertexArrays(1, &VAO);
 	if(!VBO) glGenBuffers(1, &VBO);
@@ -16,12 +15,12 @@ void Mesh::create(const std::vector<Vertex>& vertices, const std::vector<uint32_
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, verticesSize * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
 	if (indicesSize) {
 		if(!EBO) glGenBuffers(1, &EBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 	}
 
 	Vertex::setAttribArrays();

@@ -1,6 +1,6 @@
 #include "../pch.h"
 #include "Model.hpp"
-
+#include "../Utilities/Time.hpp"
 Model::Model(std::string const& path) {
 	loadModel(path);
 }
@@ -23,8 +23,6 @@ void Model::loadModel(const std::string& path) {
 	this->loadedTextures.reserve(scene->mNumTextures);
 
 	processNode(scene->mRootNode, scene);
-
-	//loadedTextures.clear(); //Just in case
 }
 void Model::processNode(aiNode* node, const aiScene* scene) {
 	for (uint32_t i = 0; i < node->mNumMeshes; i++) {
@@ -75,7 +73,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 		}
 		else
 			vertex.texCoord = glm::vec2(0.0f, 0.0f);
-		
+
 		vertices.push_back(vertex);
 	}
 	for (uint32_t i = 0; i < mesh->mNumFaces; i++) {
