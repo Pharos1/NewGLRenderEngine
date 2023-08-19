@@ -11,23 +11,25 @@
 	* Tonemapping
 	* Gamma Correction
 
-## Todo
+## Harder TODOs
 * Frustum Culling
-* Deferred Rendering (it is also good match with SSAO)
-* Skyboxes
+* Skyboxes. Probably after updatign the texture class
 * GUI (Dear ImGui)
 * CSM (Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL)
-* Post-Processing
-	* SSAO
 * Texture reuse optimization for models.
 
 ## Simple TODOs
+* Light volumes
 * Make texture class manage only the ogl resources, not the path and others.
 * Make normal timer and scoped timers different classes
+* fix specular dots, seen when rendering sponza and writing only the spec value. I think the culprits are the roughness and metallic textures
 	
 ### Todo for things I am not sure about
 * Check Occlusion Query feature and use it instead for Occlusion Culling
 * Maybe I can remove early-z rejection as deferred will be sufficient enough
+* Deferred Rendering (it is also good match with SSAO)
+* Post-Processing
+	* SSAO
 
 <!---
 ## Passes (I have to minimize them, and there will be a lot more)
