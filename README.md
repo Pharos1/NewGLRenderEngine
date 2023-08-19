@@ -13,17 +13,17 @@
 
 ## Harder TODOs
 * Frustum Culling
-* Skyboxes. Probably after updatign the texture class
+* Skyboxes. Cubemap and HDRI.
 * GUI (Dear ImGui)
 * CSM (Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL)
 * Texture reuse optimization for models.
 
 ## Simple TODOs
 * Light volumes
-* Make texture class manage only the ogl resources, not the path and others.
 * Make normal timer and scoped timers different classes
 * fix specular dots, seen when rendering sponza and writing only the spec value. I think the culprits are the roughness and metallic textures
-	
+* Make vao, vbo and ebo raii wrappers and remove mesh's destructor, copy constructor and move operator.
+
 ### Todo for things I am not sure about
 * Check Occlusion Query feature and use it instead for Occlusion Culling
 * Maybe I can remove early-z rejection as deferred will be sufficient enough
