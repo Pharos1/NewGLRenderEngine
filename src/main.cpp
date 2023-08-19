@@ -176,9 +176,6 @@ Query depthPassQuery;
 Query renderPassQuery;
 Query postprocQuery;
 
-//Multi-threading
-std::mutex mutexLock;
-
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
 
@@ -200,11 +197,15 @@ int main() {
 			double renderTime = (double)renderPassQuery.getResult() / 1000000;
 			double postprocTime = (double)postprocQuery.getResult() / 1000000;
 
-			std::cout << "Depth pre-pass: " << depthTime << "ms  |  ";
-			std::cout << "Render Pass: " << renderTime << "ms  |  ";
-			std::cout << "Post-Processing Pass: " << postprocTime << "ms  |  ";
-			std::cout << "Summed query time: " << depthTime + renderTime + postprocTime << "ms  |  ";
-			std::cout << "Chrono Frame Time: " << Time::avgMsTime << "ms\n";
+			std::stringstream ss;
+
+			ss << "Depth pre-pass: " << depthTime << "ms  |  ";
+			ss << "Render Pass: " << renderTime << "ms  |  ";
+			ss << "Post-Processing Pass: " << postprocTime << "ms  |  ";
+			ss << "Summed query time: " << depthTime + renderTime + postprocTime << "ms  |  ";
+			ss << "Chrono Frame Time: " << Time::avgMsTime << "ms\n";
+
+			glfwSetWindowTitle(window, ss.str().c_str());
 
 			lastTime = now;
 		}
@@ -229,9 +230,9 @@ int main() {
 		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) spotLight.color = glm::vec3(0);
 		else spotLight.color = glm::vec3(80);
 		if (!glfwGetKey(window, GLFW_KEY_F)) dirLight.color = glm::vec3(0);
-		else dirLight.color = glm::vec3(5);
+		else dirLight.color = glm::vec3(2);
 		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) pointLight.color = glm::vec3(0);
-		else pointLight.color = glm::vec3(15);
+		else pointLight.color = glm::vec3(10);
 
 		spotLight.set("spotLight", mainShader);
 		dirLight.set("dirLight", mainShader);
@@ -377,7 +378,7 @@ void initDependencies() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true); //TODO: this should be removed if I want performance
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true); //PERFORMANCE NOTE: this should be removed if I want performance
 
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -464,16 +465,9 @@ void setupApplication() {
 	//cerberusModel.meshes[0].material.metallic.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_M.tga");
 	//cerberusModel.meshes[0].material.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
 	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
-
-	auto loadSponz = []() {
-		sponzaModel.loadModel("Models/Sponza/sponza.glTF");
-	};
-	auto loadHuman = []() {
-		humanModel.loadModel("Models/Human/scene.gltf");
-	};
-
+	
 	sponzaModel.loadModel("Models/Sponza/sponza.glTF");
-	humanModel.loadModel("Models/Human/scene.gltf");
+	humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "None");
 	//loadSponz();
 	//loadHuman();
 
@@ -605,7 +599,7 @@ void renderScene(const Shader& shader) {
 	plane.draw();
 	checkerboardTexture.unbind();
 
-	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.5f)), { 1.5f, 1.f, 0.f }));
+	shader.setMat4("model", cubeModelMat);
 	woodTexture.bind(0);
 	cube.draw();
 	woodTexture.unbind();
