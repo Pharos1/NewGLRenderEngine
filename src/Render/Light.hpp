@@ -3,32 +3,61 @@
 #include "Shader.hpp"
 
 class DirLight {
-public:
+private:
 	glm::vec3 dir;
 	glm::vec3 color;
+
+public:
 
 	DirLight(glm::vec3 dir, glm::vec3 color);
 	DirLight() = default;
+
 	void set(const std::string& objectName, const Shader& shaderProgram) const;
+	void setDir(glm::vec3 value);
+	void setColor(glm::vec3 value);
+
+	glm::vec3 getDir() const;
+	glm::vec3 getColor() const;
 };
 class PointLight {
-public:
+private:
 	glm::vec3 pos;
 	glm::vec3 color;
+	float effectiveRadius;
 
+public:
 	PointLight(glm::vec3 pos, glm::vec3 color);
 	PointLight() = default;
+
 	void set(const std::string& objectName, const Shader& shaderProgram) const;
+
+	void setPos(glm::vec3 value);
+	void setColor(glm::vec3 value);
+
+	glm::vec3 getPos() const;
+	glm::vec3 getColor() const;
 };
 class SpotLight {
-public:
+private:
 	glm::vec3 pos;
 	glm::vec3 dir;
 	glm::vec3 color;
+
+public:
 	float cutOff;
 	float outerCutOff;
+	float effectiveRadius;
 
 	SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float cutOff, float outerCutOff);
 	SpotLight() = default;
+
 	void set(const std::string& objectName, const Shader& shaderProgram) const;
+
+	void setPos(glm::vec3 value);
+	void setDir(glm::vec3 value);
+	void setColor(glm::vec3 value);
+
+	glm::vec3 getDir() const;
+	glm::vec3 getPos() const;
+	glm::vec3 getColor() const;
 };

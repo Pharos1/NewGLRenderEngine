@@ -19,7 +19,6 @@
 * Texture reuse optimization for models.
 
 ## Simple TODOs
-* Light volumes
 * Make normal timer and scoped timers different classes
 * fix specular dots, seen when rendering sponza and writing only the spec value. I think the culprits are the roughness and metallic textures
 * Make vao, vbo and ebo raii wrappers and remove mesh's destructor, copy constructor and move operator.
@@ -27,9 +26,10 @@
 ### Todo for things I am not sure about
 * Check Occlusion Query feature and use it instead for Occlusion Culling
 * Maybe I can remove early-z rejection as deferred will be sufficient enough
-* Deferred Rendering (it is also good match with SSAO)
+* Deferred Rendering (it is also good match with SSAO and light volumes)
 * Post-Processing
 	* SSAO
+* Light volumes with deferred
 
 <!---
 ## Passes (I have to minimize them, and there will be a lot more)

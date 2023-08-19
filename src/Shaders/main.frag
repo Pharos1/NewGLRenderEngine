@@ -16,6 +16,7 @@ struct DirLight{
 struct PointLight{
 	vec3 pos;
 	vec3 color;
+	float effectiveRadius;
 };
 struct SpotLight{
 	vec3 pos;
@@ -23,6 +24,7 @@ struct SpotLight{
 	vec3 color;
 	float cutOff;
 	float outerCutOff;
+	float effectiveRadius;
 };
 
 uniform DirLight dirLight;
@@ -120,7 +122,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 	return (kD * albedo / PI + specular) * radiance * NdotL + magicAmbient;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
-	if(light.color == vec3(0.f)) return vec3(0.f);
+	if (light.color == vec3(0.f)) return vec3(0.f);
 	
 	vec3 lightDir = normalize(light.pos - worldPos);
 	vec3 halfwayVec = normalize(viewDir + lightDir);

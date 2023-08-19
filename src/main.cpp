@@ -227,23 +227,23 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_5)) postprocShader.set1i("tonemapMode", 5);
 		if (glfwGetKey(window, GLFW_KEY_6)) postprocShader.set1i("tonemapMode", 6);
 
-		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) spotLight.color = glm::vec3(0);
-		else spotLight.color = glm::vec3(80);
-		if (!glfwGetKey(window, GLFW_KEY_F)) dirLight.color = glm::vec3(0);
-		else dirLight.color = glm::vec3(2);
-		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) pointLight.color = glm::vec3(0);
-		else pointLight.color = glm::vec3(10);
+		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) spotLight.setColor(glm::vec3(0));
+		else spotLight.setColor(glm::vec3(80));
+		if (!glfwGetKey(window, GLFW_KEY_F)) dirLight.setColor(glm::vec3(0));
+		else dirLight.setColor(glm::vec3(2));
+		if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) pointLight.setColor(glm::vec3(0));
+		else pointLight.setColor(glm::vec3(10));
 
 		spotLight.set("spotLight", mainShader);
 		dirLight.set("dirLight", mainShader);
 		pointLight.set("pointLight", mainShader);
 
 		//Update lights
-		//pointLight.pos = glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
+		//pointLight.setPos(glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
 		//pointLight.set("pointLight", mainShader);
 
-		spotLight.pos = cam.pos;
-		spotLight.dir = cam.front;
+		spotLight.setPos(cam.pos);
+		spotLight.setDir(cam.front);
 		spotLight.set("spotLight", mainShader);
 
 		//Draw
@@ -553,8 +553,8 @@ void draw(const Shader& shader) {
 	//Light cube pass
 	lightBoxShader.use();
 	lightBoxShader.setMat4("view", view);
-	lightBoxShader.setVec3("lightColor", pointLight.color);
-	lightBoxShader.setVec3("lightPos", pointLight.pos);
+	lightBoxShader.setVec3("lightColor", pointLight.getColor());
+	lightBoxShader.setVec3("lightPos", pointLight.getPos());
 	cube.draw();
 
 	//Ugly skybox pass
@@ -567,11 +567,11 @@ void renderScene(const Shader& shader) {
 	shader.use();
 	
 	//Update lights
-	//pointLight.pos = glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
+	//pointLight.setPos(glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
 	//pointLight.set("pointLight", mainShader);
 
-	spotLight.pos = cam.pos;
-	spotLight.dir = cam.front;
+	spotLight.setPos(cam.pos);
+	spotLight.setDir(cam.front);
 	spotLight.set("spotLight", shader);
 
 	//Set shader uniforms
