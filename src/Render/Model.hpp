@@ -12,15 +12,13 @@ public:
 	std::vector<Texture> loadedTextures;
 	std::vector<Mesh> meshes;
 	std::string directory;
-	std::mutex mLock;
-	std::vector<std::future<void>> futures;
 
 	Model(std::string const& path);
 	Model() = default;
 
-	void draw(int firstTextureUnit = 0) const;
+	void draw() const;
 	void loadModel(const std::string& path);
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node);
-	void loadMaterial(Texture& texture, const aiMaterial* material, aiTextureType type);
+	void loadMaterial(Material& meshMaterial, GLuint unit, const aiMaterial* material, aiTextureType type);
 };

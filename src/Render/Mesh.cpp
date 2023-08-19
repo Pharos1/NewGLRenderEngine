@@ -4,6 +4,33 @@
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
 	create(vertices, indices);
 }
+Mesh::~Mesh() {
+	nLog(std::string("~Mesh has been triggered! Hint: VBO ID -> ") + std::to_string(this->VBO), Log::LogDestructorInfo, "MESH");
+	deleteMesh();
+}
+
+Mesh::Mesh(Mesh&& other) noexcept {
+	std::swap(VBO, other.VBO);
+	std::swap(VAO, other.VAO);
+	std::swap(EBO, other.EBO);
+	std::swap(verticesSize, other.verticesSize);
+	std::swap(indicesSize, other.indicesSize);
+	std::swap(material, other.material);
+}
+Mesh& Mesh::operator=(Mesh&& other) noexcept {
+	if (this == &other) return *this;
+
+	deleteMesh();
+
+	std::swap(VBO, other.VBO);
+	std::swap(VAO, other.VAO);
+	std::swap(EBO, other.EBO);
+	std::swap(verticesSize, other.verticesSize);
+	std::swap(indicesSize, other.indicesSize);
+	std::swap(material, other.material);
+
+	return *this;
+}
 
 void Mesh::create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
 	verticesSize = static_cast<int>(vertices.capacity());
@@ -32,15 +59,17 @@ void Mesh::deleteMesh() {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
+
+	VAO = 0;
+	VBO = 0;
+	EBO = 0;
 	verticesSize = 0;
 	indicesSize = 0;
 
 	material.deleteMaterial();
 }
-void Mesh::draw(uint32_t firstTextureUnit) const {
-	if (!material.empty()) {
-		material.bind(firstTextureUnit);
-	}
+void Mesh::draw() const {
+	material.bind();
 	glBindVertexArray(VAO);
 
 	if (indicesSize) {
@@ -51,8 +80,5 @@ void Mesh::draw(uint32_t firstTextureUnit) const {
 	}
 
 	glBindVertexArray(0);
-
-	if (!material.empty()) {
-		material.unbind();
-	}
+	material.unbind();
 }

@@ -70,10 +70,10 @@ DirLight dirLight;
 PointLight pointLight;
 SpotLight spotLight;
 
-//Textures
-Texture woodTexture;
-Texture checkerboardTexture;
-Texture noiseTexture;
+//Materials
+Material woodTexture;
+Material checkerboardTexture;
+Material noiseTexture;
 //Texture gPosition, gNormal, gAlbedo;
 
 //Camera
@@ -263,11 +263,11 @@ int main() {
 
 		postprocQuery.begin();
 		postprocShader.use();
-		postprocFB.FBOTexture.bind(0);
+		postprocFB.texture.bind(0);
 		glDepthFunc(GL_LEQUAL);
 		quad.draw();
 		glDepthFunc(GL_LESS);
-		postprocFB.FBOTexture.unbind();
+		postprocFB.texture.unbind();
 		postprocQuery.end();
 
 		//FINALY wait for the frame to finish
@@ -488,8 +488,8 @@ void setupApplication() {
 	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f) * 1), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)));
 
 	//Textures
-	woodTexture.loadTexture("Textures/Other/Wood.png", TextureCreateInfo());
-	checkerboardTexture.loadTexture("Textures/Props/Checkerboard.jpg", TextureCreateInfo());
+	woodTexture.addTexture("Textures/Other/Wood.png", 0);
+	checkerboardTexture.addTexture("Textures/Props/Checkerboard.jpg", 0);
 
 	//Uniforms and stuff
 	mainShader.use();
@@ -540,10 +540,7 @@ void setupScreenRelated() {
 	depthPrePassShader.setMat4("proj", proj);
 
 	//Framebuffers
-	postprocFB.internalFormat = GL_RGBA16F;
-	postprocFB.width = scrWidth;
-	postprocFB.height = scrHeight;
-	postprocFB.create();
+	postprocFB.create2D(scrWidth, scrHeight, GL_RGBA16F);
 }
 void cleanup() {
 	glfwTerminate();
@@ -589,18 +586,18 @@ void renderScene(const Shader& shader) {
 	//cerberusModel.draw(0);
 
 	shader.setMat4("model", glm::mat4(1.f));
-	sponzaModel.draw(0);
+	sponzaModel.draw();
 
 	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.03f)), { -15.f, 1.f, 0.f }));
-	humanModel.draw(0);
+	humanModel.draw();
 
 	shader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(1000.f)));
-	checkerboardTexture.bind(0);
+	checkerboardTexture.bind();
 	plane.draw();
 	checkerboardTexture.unbind();
 
 	shader.setMat4("model", cubeModelMat);
-	woodTexture.bind(0);
+	woodTexture.bind();
 	cube.draw();
 	woodTexture.unbind();
 }

@@ -2,31 +2,26 @@
 #include "../pch.h"
 #include "../Utilities/Logger.hpp"
 
-struct TextureCreateInfo {
-	GLuint type = GL_TEXTURE_2D;
-	GLuint wrapX = GL_REPEAT;
-	GLuint wrapY = GL_REPEAT;
-	GLuint minFilter = GL_LINEAR_MIPMAP_LINEAR;
-	GLuint magFilter = GL_LINEAR;
-	GLuint internalFormat = GL_RGBA;
-	GLuint format = GL_RGBA;
-	GLuint dataType = GL_UNSIGNED_BYTE;
-	bool invertY = true;
-	int width = 0;
-	int height = 0;
-	void* data = nullptr;
-	bool noImage = false;
-	bool generateMipmap = true;
-};
 class Texture {
 private:
 	GLuint id = 0;
-	GLuint type = GL_TEXTURE_2D;
+
+	GLenum target = GL_TEXTURE_2D;
+	GLenum internalFormat = GL_RGBA;
+	GLenum format = GL_RGBA;
+	GLenum type = GL_UNSIGNED_BYTE;
+	GLenum filterMin = GL_LINEAR_MIPMAP_LINEAR;
+	GLenum filterMax = GL_LINEAR;
+	GLenum wrapS = GL_REPEAT; //Wrap X
+	GLenum wrapT = GL_REPEAT; //Wrap Y
+	GLenum wrapR = GL_REPEAT; //Wrap Z
+	bool mipmapping = true;
+
+	GLuint width = 0;
+	GLuint height = 0;
+	GLuint depth = 0;
 
 public:
-	std::string path{};
-
-	Texture(const char* path, const TextureCreateInfo& createInfo);
 	Texture() = default;
 	~Texture();
 
@@ -36,11 +31,25 @@ public:
 	Texture(Texture&&) noexcept;
 	Texture& operator=(Texture&&) noexcept;
 
-	GLuint getID() const;
-	void bind(const GLuint textureUnit) const;
+	void bind(const GLuint unit = 0) const;
 	void unbind() const;
 	void deleteTexture();
-	void loadTexture(const std::string& path, const TextureCreateInfo& createInfo = TextureCreateInfo());
-
 	bool empty() const;
+
+	void create1D(GLuint width, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
+	void create2D(GLuint width, GLuint height, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
+	void create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
+
+	void setFilterMin(GLenum filter);
+	void setFilterMax(GLenum filter);
+	void setWrapS(GLenum wrapMethod);
+	void setWrapT(GLenum wrapMethod);
+	void setWrapR(GLenum wrapMethod);
+
+	GLuint getID() const;
+	GLuint getWidth() const;
+	GLuint getHeight() const;
+	GLenum getTarget() const;
+
+	void loadSTBI2D(const std::string& path, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, bool invertY = true, GLenum desiredChannels = STBI_rgb_alpha);
 };

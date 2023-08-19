@@ -4,17 +4,15 @@
 
 class Material {
 public:
-	Texture albedo;
-	Texture metallic;
-	Texture roughness;
-	Texture normal;
+	std::vector<std::pair<Texture, GLuint>> textures;
 
-	Material(const char* albedoPath, const char* metallicPath = nullptr, const char* roughnessPath = nullptr, const char* normalPath = nullptr);
 	Material() = default;
 
-	void bind(int firstTextureUnit) const;
+	void bind() const;
 	void unbind() const;
+	bool empty() const;
 	void deleteMaterial();
 
-	bool empty() const;
+	void addTexture(const std::string& path, const GLuint unit = 0);
+	//Todo: maybe a removeTexture func
 };

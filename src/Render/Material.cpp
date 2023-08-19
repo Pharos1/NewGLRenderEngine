@@ -2,39 +2,34 @@
 #include "Material.hpp"
 #include "../Utilities/Logger.hpp"
 
-Material::Material(const char* albedoPath, const char* metallicPath, const char* roughnessPath, const char* normalPath) {
-	if (albedoPath) albedo.loadTexture(albedoPath);
-	if (metallicPath) metallic.loadTexture(metallicPath);
-	if (roughnessPath) roughness.loadTexture(roughnessPath);
-	if (normalPath) normal.loadTexture(normalPath);
-}
-
-void Material::bind(int firstTextureUnit) const {
-	albedo.bind(firstTextureUnit);
-	metallic.bind(firstTextureUnit + 1);
-	roughness.bind(firstTextureUnit + 2);
-	normal.bind(firstTextureUnit + 3);
+void Material::bind() const {
+	for (auto& [texture, unit] : textures) {
+		texture.bind(unit);
+	}
 }
 void Material::unbind() const {
-	albedo.unbind();
-	metallic.unbind();
-	roughness.unbind();
-	normal.unbind();
+	for (auto& [texture, unit] : textures) {
+		texture.unbind();
+	}
+}
+bool Material::empty() const {
+	bool empty = false;
+
+	for (auto& [texture, unit] : textures) {
+		empty |= texture.empty();
+	}
+
+	return empty;
 }
 void Material::deleteMaterial() {
-	mLog(std::string("Function 'deleteMaterial()' of class Material has been triggered! Ensure that all resources are properly handled. Hint: Albedo Texture ID -> ") + std::to_string(albedo.getID()), Log::LogInfo, "MATERIAL");
-	
-	albedo.deleteTexture();
-	metallic.deleteTexture();
-	roughness.deleteTexture();
-	normal.deleteTexture();
+	for (auto& [texture, unit] : textures) {
+		texture.deleteTexture();
+	}
+	textures.clear();
 }
+void Material::addTexture(const std::string& path, const GLuint unit) {
+	Texture texture;
+	texture.loadSTBI2D(path);
 
-bool Material::empty() const {
-	if (!albedo.empty()) return false;
-	else if (!metallic.empty()) return false;
-	else if (!roughness.empty()) return false;
-	else if (!normal.empty()) return false;
-
-	return true;
+	textures.emplace_back(std::move(texture), unit);
 }

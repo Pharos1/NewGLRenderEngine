@@ -1,29 +1,18 @@
 #include "../pch.h"
 #include "Framebuffer.hpp"
 
-Framebuffer::Framebuffer(GLsizei width, GLsizei height)
-	: width(width), height(height) {
-	create();
-}
 Framebuffer::~Framebuffer() {
-	mLog(std::string("~Framebuffer has been triggered! Hint: FBO ID -> ") + std::to_string(this->FBO), Log::LogDestructorInfo, "FRAMEBUFFER");
+	nLog(std::string("~Framebuffer has been triggered! Hint: FBO ID -> ") + std::to_string(this->FBO), Log::LogDestructorInfo, "FRAMEBUFFER");
 	deleteFramebuffer();
 }
 
 Framebuffer::Framebuffer(Framebuffer&& other) noexcept {
 	std::swap(FBO, other.FBO);
 	std::swap(RBO, other.RBO);
-	std::swap(FBOTexture, other.FBOTexture);
-	//std::swap(target, other.target);
 	std::swap(width, other.width);
 	std::swap(height, other.height);
-	std::swap(internalFormat, other.internalFormat);
-	std::swap(format, other.format);
-	//std::swap(minFilter, other.minFilter);
-	//std::swap(magFilter, other.magFilter);
-	std::swap(RBOFormat, other.RBOFormat);
+	std::swap(depth, other.depth);
 }
-
 Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
 	if (this == &other) return *this;
 
@@ -31,61 +20,13 @@ Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
 
 	std::swap(FBO, other.FBO);
 	std::swap(RBO, other.RBO);
-	std::swap(FBOTexture, other.FBOTexture);
-	//std::swap(target, other.target);
 	std::swap(width, other.width);
 	std::swap(height, other.height);
-	std::swap(internalFormat, other.internalFormat);
-	std::swap(format, other.format);
-	//std::swap(minFilter, other.minFilter);
-	//std::swap(magFilter, other.magFilter);
-	std::swap(RBOFormat, other.RBOFormat);
+	std::swap(depth, other.depth);
+
+	return *this;
 }
 
-void Framebuffer::create() {
-	if (width < 0 || height < 0) {
-		mLog("Attempted to create a framebuffer with no size provided! Ensure you entered the correct width and height.", Log::LogError, "FRAMEBUFFER");
-		return;
-	}
-
-	if (!FBO) glGenFramebuffers(1, &FBO);
-	if (!RBO) glGenRenderbuffers(1, &RBO);
-	//if (!FBOTexture) glGenTextures(1, &FBOTexture);
-	TextureCreateInfo createInfo;
-	createInfo.wrapX = GL_CLAMP_TO_BORDER;
-	createInfo.wrapY = GL_CLAMP_TO_BORDER;
-	createInfo.minFilter = minFilter;
-	createInfo.magFilter = magFilter;
-	createInfo.width = width;
-	createInfo.height = height;
-	createInfo.noImage = true;
-	createInfo.internalFormat = internalFormat;
-	createInfo.format = format;
-	createInfo.generateMipmap = false;
-	createInfo.dataType = dataType;
-
-	FBOTexture.loadTexture("", createInfo);
-
-
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-	FBOTexture.bind(0);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, useTextureAs, GL_TEXTURE_2D, FBOTexture.getID(), 0);
-
-	if (RBOFormat) {
-		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-		glRenderbufferStorage(GL_RENDERBUFFER, RBOFormat, width, height);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
-	}
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		mLog("Failed to create a framebuffer!", Log::LogError, "FRAMEBUFFER");
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	FBOTexture.unbind();
-}
 void Framebuffer::bind(GLuint target) const {
 	glBindFramebuffer(target, FBO);
 }
@@ -99,13 +40,97 @@ void Framebuffer::deleteFramebuffer() {
 	glDeleteFramebuffers(1, &FBO);
 	glDeleteRenderbuffers(1, &RBO);
 
-	FBO = 0; //On delete default everything
+	FBO = 0; //Default
 	RBO = 0;
-	width = -1;
-	height = -1;
-	internalFormat = GL_RGBA;
-	format = GL_RGBA;
-	minFilter = GL_LINEAR;
-	magFilter = GL_LINEAR;
-	RBOFormat = GL_DEPTH24_STENCIL8;
+	width = 0;
+	height = 0;
+	depth = 0;
+}
+
+void Framebuffer::create1D(GLuint width, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	width = width;
+	height = 0;
+	depth = 0;
+	
+	if (!FBO) glGenFramebuffers(1, &FBO);
+	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
+
+	texture.create1D(width, internalFormat, format, type, nullptr);
+
+	bind();
+	texture.bind();
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0);
+
+	if (RBOFormat) {
+		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, RBOFormat, width, height);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+	}
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		mLog("Failed to create framebuffer!", Log::LogError, "FRAMEBUFFER");
+
+	unbind();
+	texture.unbind();
+}
+void Framebuffer::create2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	width = width;
+	height = height;
+	depth = 0;
+	
+	if (!FBO) glGenFramebuffers(1, &FBO);
+	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
+
+	texture.create2D(width, height, internalFormat, format, type, nullptr);
+
+	bind();
+	texture.bind();
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0);
+
+	if (RBOFormat) {
+		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, RBOFormat, width, height);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+	}
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		mLog("Failed to create framebuffer!", Log::LogError, "FRAMEBUFFER");
+
+	unbind();
+	texture.unbind();
+}
+void Framebuffer::create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	width = width;
+	height = height;
+	depth = depth;
+	
+	if (!FBO) glGenFramebuffers(1, &FBO);
+	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
+
+	texture.create3D(width, height, depth, internalFormat, format, type, nullptr);
+
+	bind();
+	texture.bind();
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0);
+
+	if (RBOFormat) {
+		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, RBOFormat, width, height);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+	}
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		mLog("Failed to create framebuffer!", Log::LogError, "FRAMEBUFFER");
+
+	unbind();
+	texture.unbind();
 }

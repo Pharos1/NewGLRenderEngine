@@ -7,21 +7,14 @@ class Framebuffer {
 private:
 	GLuint FBO = 0;
 	GLuint RBO = 0;
+	GLuint width = 0;
+	GLuint height = 0;
+	GLuint depth = 0;
 	//GLuint FBOTexture = 0;
 
 public:
-	Texture FBOTexture;
-	GLsizei width = -1;
-	GLsizei height = -1;
-	GLint internalFormat = GL_RGBA; //GL_RGBA16F for HDR
-	GLint format = GL_RGBA;
-	GLint minFilter = GL_LINEAR;
-	GLint magFilter = GL_LINEAR;
-	GLint RBOFormat = GL_DEPTH24_STENCIL8; //0 for disabled
-	GLuint dataType = GL_UNSIGNED_BYTE;
-	GLuint useTextureAs = GL_COLOR_ATTACHMENT0;
+	Texture texture;
 
-	Framebuffer(GLsizei width, GLsizei height);
 	Framebuffer() = default;
 	~Framebuffer();
 
@@ -31,9 +24,12 @@ public:
 	Framebuffer(Framebuffer&& other) noexcept;
 	Framebuffer& operator=(Framebuffer&& other) noexcept;
 
-	void create();
 	void bind(GLuint target = GL_FRAMEBUFFER) const;
 	static void unbind(GLuint target = GL_FRAMEBUFFER);
 	static void clear();
 	void deleteFramebuffer();
+
+	void create1D(GLuint width, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
+	void create2D(GLuint width, GLuint height, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
+	void create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
 };

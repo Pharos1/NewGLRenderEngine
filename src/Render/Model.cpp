@@ -1,13 +1,15 @@
 #include "../pch.h"
 #include "Model.hpp"
 #include "../Utilities/Time.hpp"
+
 Model::Model(std::string const& path) {
 	loadModel(path);
 }
 
-void Model::draw(int firstTextureUnit) const {
-	for (unsigned int i = 0; i < meshes.size(); i++)
-		meshes[i].draw(firstTextureUnit);
+void Model::draw() const {
+	for (const Mesh& mesh : meshes) {
+		mesh.draw();
+	}
 }
 void Model::loadModel(const std::string& path) {
 	Assimp::Importer importer;
@@ -20,7 +22,7 @@ void Model::loadModel(const std::string& path) {
 	directory = path.substr(0, path.find_last_of("/\\"));
 
 	meshes.reserve(scene->mNumMeshes);
-	this->loadedTextures.reserve(scene->mNumTextures);
+	loadedTextures.reserve(scene->mNumTextures);
 
 	processNode(scene->mRootNode, scene);
 }
@@ -88,16 +90,16 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 	if (scene->HasMaterials()) {
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		loadMaterial(finalMesh.material.albedo, material, aiTextureType_DIFFUSE);
-		loadMaterial(finalMesh.material.normal, material, aiTextureType_NORMALS);
-		loadMaterial(finalMesh.material.metallic, material, aiTextureType_METALNESS);
-		loadMaterial(finalMesh.material.roughness, material, aiTextureType_DIFFUSE_ROUGHNESS);
+		loadMaterial(finalMesh.material, 0, material, aiTextureType_DIFFUSE);
+		loadMaterial(finalMesh.material, 1, material, aiTextureType_METALNESS);
+		loadMaterial(finalMesh.material, 2, material, aiTextureType_DIFFUSE_ROUGHNESS);
+		loadMaterial(finalMesh.material, 3, material, aiTextureType_NORMALS);
 		//loadMaterial(finalMesh.material.AO, material, aiTextureType_LIGHTMAP);
 	}
 
 	return finalMesh;
 }
-void Model::loadMaterial(Texture& texture, const aiMaterial* material, aiTextureType type) {
+void Model::loadMaterial(Material& meshMaterial, GLuint unit, const aiMaterial* material, aiTextureType type) {
 	aiString texturePath;
 	if (material->GetTexture(type, 0, &texturePath) == -1)
 		return;
@@ -119,7 +121,7 @@ void Model::loadMaterial(Texture& texture, const aiMaterial* material, aiTexture
 	//}
 	//if (!skip) {
 		//textureID = TextureNS::loadTexture(path.c_str());
-	texture.loadTexture(path.c_str());
+	meshMaterial.addTexture(path, unit);
 		//loadedTextures.push_back();
 	//}
 }

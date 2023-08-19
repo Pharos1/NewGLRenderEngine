@@ -3,9 +3,6 @@
 #include "../Utilities/Time.hpp"
 #include "Texture.hpp"
 
-Texture::Texture(const char* path, const TextureCreateInfo& createInfo) {
-	loadTexture(path, createInfo);
-}
 Texture::~Texture() { //Made the deletion explicit as this destructor messes everything when there are scopes and copying
 	if (!id) {
 		//mLog("Attempted to delete an invalid texture ID!", Log::LogWarning);
@@ -18,8 +15,21 @@ Texture::~Texture() { //Made the deletion explicit as this destructor messes eve
 
 Texture::Texture(Texture&& other) noexcept {
 	std::swap(id, other.id);
+
+	std::swap(target, other.target);
+	std::swap(internalFormat, other.internalFormat);
+	std::swap(format, other.format);
 	std::swap(type, other.type);
-	std::swap(path, other.path);
+	std::swap(filterMin, other.filterMin);
+	std::swap(filterMax, other.filterMax);
+	std::swap(wrapS, other.wrapS);
+	std::swap(wrapT, other.wrapT);
+	std::swap(wrapR, other.wrapR);
+	std::swap(mipmapping, other.mipmapping);
+
+	std::swap(width, other.width);
+	std::swap(height, other.height);
+	std::swap(depth, other.depth);
 }
 Texture& Texture::operator=(Texture&& other) noexcept {
 	if (this == &other) return *this;
@@ -27,79 +37,155 @@ Texture& Texture::operator=(Texture&& other) noexcept {
 	deleteTexture();
 
 	std::swap(id, other.id);
+
+	std::swap(target, other.target);
+	std::swap(internalFormat, other.internalFormat);
+	std::swap(format, other.format);
 	std::swap(type, other.type);
-	std::swap(path, other.path);
+	std::swap(filterMin, other.filterMin);
+	std::swap(filterMax, other.filterMax);
+	std::swap(wrapS, other.wrapS);
+	std::swap(wrapT, other.wrapT);
+	std::swap(wrapR, other.wrapR);
+	std::swap(mipmapping, other.mipmapping);
+
+	std::swap(width, other.width);
+	std::swap(height, other.height);
+	std::swap(depth, other.depth);
 
 	return *this;
 }
 
-GLuint Texture::getID() const {
-	return this->id;
-}
-void Texture::bind(const GLuint textureUnit) const {
-	glActiveTexture(GL_TEXTURE0 + textureUnit);
-	glBindTexture(type, id);
+void Texture::bind(const GLuint unit) const {
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(target, id);
 }
 void Texture::unbind() const{
-	glBindTexture(type, 0);
+	glBindTexture(target, 0);
 }
 void Texture::deleteTexture() {
 	glDeleteTextures(1, &id);
 
 	id = 0; //Default
-	type = GL_TEXTURE_2D;
-	path = "";
-}
-void Texture::loadTexture(const std::string& path, const TextureCreateInfo& createInfo) {
-	//Note: glGenTexture generates n number of texture ids and sends them to the second parameter
-	//Note: glActiveTexture sets the texture unit that glBindTexture will bind to(starting from 0)
-	//Note: glBindTexture sets the texture id(sec parameter) to the texture unit(from glActiveTexture) if glActive texture wasn't called before it is bind to GL_TEXTURE0 
-	/*if (!path || path[0] == '\0') { //Null or empty
-		mLog("Attempted to load a texture with no path provided! Ensure you entered the correct path.", Log::LogError);
-		return;
-	}*/
 
-	glActiveTexture(GL_TEXTURE0);
+	target = GL_TEXTURE_2D;
+	internalFormat = GL_RGBA;
+	format = GL_RGBA;
+	type = GL_UNSIGNED_BYTE;
+	filterMin = GL_LINEAR_MIPMAP_LINEAR;
+	filterMax = GL_LINEAR;
+	wrapS = GL_REPEAT; //Wrap X
+	wrapT = GL_REPEAT; //Wrap Y
+	wrapR = GL_REPEAT; //Wrap Z
+	mipmapping = true;
 
-	this->path = path;
-	this->type = createInfo.type;
-	bool some = empty();
-	if (some) glGenTextures(1, &this->id);
-	
-	unsigned char* data = nullptr;
-
-	int width;
-	int height;
-	int channels;
-
-	stbi_set_flip_vertically_on_load(createInfo.invertY);
-
-	if (!createInfo.noImage)
-		data = stbi_load(this->path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-	else {
-		width = createInfo.width;
-		height = createInfo.height;
-		data = (unsigned char*) createInfo.data;
-	}
-	//this->id = path.empty() ? 0 : SOIL_load_OGL_texture(this->path.c_str(), SOIL_LOAD_RGBA, this->id, invertY ? SOIL_FLAG_INVERT_Y : 0);
-
-	if (data || createInfo.noImage) {
-		glBindTexture(createInfo.type, this->id);
-		glTexParameteri(createInfo.type, GL_TEXTURE_WRAP_S, createInfo.wrapX); //Note: When using transparency its good to use GL_CLAMP_TO_EDGE instead of GL_REPEAT to prevent interpolation of colors on the top of the texture
-		glTexParameteri(createInfo.type, GL_TEXTURE_WRAP_T, createInfo.wrapY); //and here also
-		glTexParameteri(createInfo.type, GL_TEXTURE_MIN_FILTER, createInfo.minFilter);
-		glTexParameteri(createInfo.type, GL_TEXTURE_MAG_FILTER, createInfo.magFilter);
-
-		glTexImage2D(createInfo.type, 0, createInfo.internalFormat, width, height, 0, createInfo.format, createInfo.dataType, data);
-		if(createInfo.generateMipmap)
-			glGenerateMipmap(createInfo.type);
-	}
-	else
-		mLog(std::string("Failed to load a texture with path '") + this->path + "'. Last SOIL result: " + SOIL_last_result() + ".", Log::LogError, "TEXTURE");
-
-	glBindTexture(createInfo.type, 0); //Unbind
-	if(!createInfo.noImage) stbi_image_free(data);
+	width = 0;
+	height = 0;
+	depth = 0;
 }
 bool Texture::empty() const {
 	return !this->id;
+}
+
+void Texture::create1D(GLuint width, GLenum internalFormat, GLenum format, GLenum type, void* data){
+	glGenTextures(1, &id);
+
+	width = width;
+	height = 0;
+	depth = 0;
+	internalFormat = internalFormat;
+	format = format;
+	type = type;
+
+	if (target != GL_TEXTURE_1D)
+		nLog("Incorrect target used!", Log::LogError, "Texture::create1D");
+	
+	bind();
+	glTexImage1D(target, 0, internalFormat, width, 0, format, type, data);
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMax);
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
+	if (mipmapping)
+		glGenerateMipmap(target);
+	unbind();
+}
+void Texture::create2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum type, void* data) {
+	glGenTextures(1, &id);
+
+	width = width;
+	height = height;
+	depth = 0;
+	internalFormat = internalFormat;
+	format = format;
+	type = type;
+
+	if (target != GL_TEXTURE_2D)
+		nLog("Incorrect target used!", Log::LogError, "Texture::create2D");
+
+	bind();
+	glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMax);
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
+	if (mipmapping)
+		glGenerateMipmap(target);
+	unbind();
+}
+void Texture::create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum type, void* data) {
+	glGenTextures(1, &id);
+
+	width = width;
+	height = height;
+	depth = depth;
+	internalFormat = internalFormat;
+	format = format;
+	type = type;
+
+	if (target != GL_TEXTURE_3D)
+		nLog("Incorrect target used!", Log::LogError, "Texture::create3D");
+
+	bind();
+	glTexImage3D(target, 0, internalFormat, width, height, depth, 0, format, type, data);
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMax);
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
+	if (mipmapping)
+		glGenerateMipmap(target);
+	unbind();
+}
+
+void Texture::setFilterMin(GLenum filter) {
+	bind();
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
+}
+void Texture::setFilterMax(GLenum filter) {
+	bind();
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+}
+void Texture::setWrapS(GLenum wrapMethod) {
+	bind();
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapMethod);
+}
+void Texture::setWrapT(GLenum wrapMethod) {
+	bind();
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapMethod);
+}
+void Texture::setWrapR(GLenum wrapMethod) {
+	bind();
+	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapMethod);
+}
+
+GLuint Texture::getID() const { return this->id; }
+GLuint Texture::getWidth() const { return width; }
+GLuint Texture::getHeight() const { return height; }
+GLenum Texture::getTarget() const { return target; };
+
+void Texture::loadSTBI2D(const std::string& path, GLenum internalFormat, GLenum format, GLenum type, bool invertY, GLenum desiredChannels) {
+	GLint width, height, channels;
+
+	stbi_set_flip_vertically_on_load(invertY);
+
+	void* data = stbi_load(path.c_str(), &width, &height, &channels, desiredChannels);
+	create2D(width, height, internalFormat, format, type, data);
+	stbi_image_free(data);
 }

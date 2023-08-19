@@ -53,10 +53,6 @@ void Shader::loadShader(const std::string& vPath, const std::string& fPath, cons
 	fContent = fShaderStream.str();
 	gContent = gShaderStream.str();
 
-	vShaderFile.close(); //Yes! I know about RAII, but ignore that, if you even saw it.
-	fShaderFile.close();
-	gShaderFile.close();
-
 	const char* vShaderContent = vContent.c_str();
 	const char* fShaderContent = fContent.c_str();
 	const char* gShaderContent = gContent.c_str();
@@ -91,7 +87,8 @@ void Shader::loadShader(const std::string& vPath, const std::string& fPath, cons
 
 	glAttachShader(id, vertex);
 	glAttachShader(id, fragment);
-	if (!gPath.empty()) glAttachShader(id, geometry);
+	if (!gPath.empty())
+		glAttachShader(id, geometry);
 	glLinkProgram(id);
 
 	//Check for errors
@@ -101,7 +98,7 @@ void Shader::loadShader(const std::string& vPath, const std::string& fPath, cons
 		mLog(std::string("Program linking failed! Reason: ") + infoLog, Log::LogError, "SHADER");
 	}
 
-	//Clear the shader after they are linked
+	//Delete the shaders after they are linked
 	glDetachShader(id, vertex);
 	glDeleteShader(vertex);
 
