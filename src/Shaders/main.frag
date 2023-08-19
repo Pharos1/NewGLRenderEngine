@@ -47,7 +47,6 @@ float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent, flo
 #define lightRadius 1.f
 float attenuation(float dist){
 	//Point Light Attenuation Without Singularity from Cem Yukse, University of Utah(http://www.cemyuksel.com/research/pointlightattenuation/pointlightattenuation.pdf)
-	//Radius constant is 1.15.
 	float radiusSquared = (lightRadius * lightRadius);
 	float attenuation = 2.f / radiusSquared;
 	attenuation *= (1.f - dist/sqrt((dist*dist) + radiusSquared));
@@ -117,7 +116,8 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 	kD *= 1.0 - metallic;
 
 	float NdotL = max(dot(normal, lightDir), 0.f);
-	return (kD * albedo / PI + specular) * radiance * NdotL;
+	vec3 magicAmbient = albedo * .25f;
+	return (kD * albedo / PI + specular) * radiance * NdotL + magicAmbient;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
 	if(light.color == vec3(0.f)) return vec3(0.f);
@@ -126,8 +126,9 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, 
 	vec3 halfwayVec = normalize(viewDir + lightDir);
   
 	float dist = length(light.pos - worldPos);
-	float attenuation = attenuation(dist);//1.f / (dist * dist);
+	float attenuation = attenuation(dist);
 	vec3 radiance = light.color * attenuation;
+	float NdotL = max(dot(normal, lightDir), 0.f);
 	
 	vec3 fresnel = fresnelSchlick(max(dot(halfwayVec, viewDir), 0.f), baseReflectivity);
 
@@ -136,16 +137,16 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, 
 	float G   = geometrySmith(normal, viewDir, lightDir, roughness);
 
 	vec3 numerator    = NDF * G * fresnel;
-	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
+	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * NdotL + .0001f;
 	vec3 specular     = numerator / denominator; 
 
 	vec3 kS = fresnel;
-	vec3 kD = vec3(1.0) - kS;
+	vec3 kD = vec3(1.f) - kS;
 
-	kD *= 1.0 - metallic;
+	kD *= 1.f - metallic;
 
-	float NdotL = max(dot(normal, lightDir), 0.f);
-	return (kD * albedo / PI + specular) * radiance * NdotL;
+	vec3 magicAmbient =  5*albedo * .05f / dist;
+	return (kD * albedo / PI + specular) * radiance * NdotL + magicAmbient;
 }
 vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
 	if(light.color == vec3(0.f)) return vec3(0.f);
@@ -156,6 +157,7 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 	float dist = length(light.pos - worldPos);
 	float attenuation = 1.f / (dist * dist);
 	vec3 radiance = light.color * attenuation;
+	float NdotL = max(dot(normal, lightDir), 0.f);
 	
 	vec3 fresnel = fresnelSchlick(max(dot(halfwayVec, viewDir), 0.f), baseReflectivity);
 
@@ -164,15 +166,13 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 	float G   = geometrySmith(normal, viewDir, lightDir, roughness);
 
 	vec3 numerator = NDF * G * fresnel;
-	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * max(dot(normal, lightDir), .1f)  + .0001f;
+	float denominator = 4.f * max(dot(normal, viewDir), 0.f) * NdotL + .0001f;
 	vec3 specular = numerator / denominator; 
 
 	vec3 kS = fresnel;
-	vec3 kD = vec3(1.0) - kS;
+	vec3 kD = vec3(1.f) - kS;
 
-	kD *= 1.0 - metallic;
-
-	float NdotL = max(dot(normal, lightDir), 0.f);
+	kD *= 1.f - metallic;
 
 	float theta = dot(lightDir, normalize(-light.dir)); 
 	float epsilon = light.cutOff - light.outerCutOff;
@@ -185,13 +185,13 @@ void main(){
 	if(texture(albedoTex, texCoord).a < .05f) discard;
 
 	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
-	float sampledMetallic = texture(metallicTex, texCoord).r; //Using blue as sponza follows some strange convention
+	float sampledMetallic = texture(metallicTex, texCoord).r;
 	float sampledRoughness = texture(roughnessTex, texCoord).r;
-	vec3 sampledNormal = texture(normalTex, texCoord).rgb;
+	vec3 sampledNormal = texture(normalTex, texCoord).xyz;
 
 	vec3 fragNormal;
 	if(sampledNormal != vec3(0.f) && TBN != mat3(0.f)){
-		fragNormal = getNormalFromMap();
+		fragNormal = normalize(TBN * (sampledNormal * 2.f - 1.f));
 	}
 	else{
 		fragNormal = normalize(vertNormal);
@@ -211,7 +211,7 @@ void main(){
 	vec3 viewDir = normalize(viewPos - worldPos);
 
 	
-	vec3 baseReflectivity = vec3(0.04);
+	vec3 baseReflectivity = vec3(.04f);
 	baseReflectivity = mix(baseReflectivity, sampledAlbedo, sampledMetallic);
 
 	vec3 result = vec3(0.f);
@@ -219,8 +219,8 @@ void main(){
 	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 
-	float ambientCoeficient = .1f;
+	float ambientCoeficient = .05f;
 	result += ambientCoeficient * sampledAlbedo;
-
+	
 	fragOut = vec4(result, 1.f);
 }
