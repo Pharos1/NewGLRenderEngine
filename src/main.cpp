@@ -275,7 +275,7 @@ int main() {
 		glfwSwapBuffers(window);
 	}
 
-	mLog("Application stopped.", Log::LogInfo, "");
+	nLog("Application stopped.", Log::LogInfo, "MAIN");
 	cleanup();
 	return 0;
 }
@@ -467,7 +467,7 @@ void setupApplication() {
 	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
 	
 	sponzaModel.loadModel("Models/Sponza/sponza.glTF");
-	humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "None");
+	humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
 	//loadSponz();
 	//loadHuman();
 
