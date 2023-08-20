@@ -60,7 +60,8 @@ void Texture::bind(const GLuint unit) const {
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(target, id);
 }
-void Texture::unbind() const{
+void Texture::unbind(const GLuint unit) const{
+	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(target, 0);
 }
 void Texture::deleteTexture() {

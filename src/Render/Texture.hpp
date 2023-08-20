@@ -32,7 +32,7 @@ public:
 	Texture& operator=(Texture&&) noexcept;
 
 	void bind(const GLuint unit = 0) const;
-	void unbind() const;
+	void unbind(const GLuint unit = 0) const;
 	void deleteTexture();
 	bool empty() const;
 
