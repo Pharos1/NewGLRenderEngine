@@ -9,7 +9,7 @@ void Material::bind() const {
 }
 void Material::unbind() const {
 	for (auto& [texture, unit] : textures) {
-		texture.unbind();
+		texture.unbind(unit);
 	}
 }
 bool Material::empty() const {
