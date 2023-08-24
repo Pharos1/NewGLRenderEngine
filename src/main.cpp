@@ -274,10 +274,6 @@ int main() {
 
 		postprocShader.set1i("tonemapMode", tonemapMode);
 
-		//dirLight.enabled = glfwGetKey(window, GLFW_KEY_F) == GLFW_TRUE;
-		//spotLight.enabled = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_TRUE;
-		//pointLight.enabled = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_TRUE;
-
 		if (glfwGetKey(window, GLFW_KEY_F) && now - lastSpotTime > .2f) {
 			spotLight.enabled = !spotLight.enabled;
 			lastSpotTime = now;
