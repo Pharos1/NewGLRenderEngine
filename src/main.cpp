@@ -49,7 +49,7 @@ Shader mainShader;
 Shader lightBoxShader;
 Shader renderQuadShader;
 Shader postprocShader;
-Shader depthPrePassShader;
+Shader depthPassShader;
 Shader deferredShader;
 
 //Transformation
@@ -493,7 +493,7 @@ void setupApplication() {
 	gradientSkyboxShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/gradientSkybox.frag");
 	renderQuadShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/renderQuad.frag");
 	postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postproc.frag");
-	depthPrePassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
+	depthPassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
 	deferredShader.loadShader("src/Shaders/main.vert", "src/Shaders/deferred.frag");
 
 	//Transformation
