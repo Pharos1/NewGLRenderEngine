@@ -223,8 +223,8 @@ void main(){
 	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
 
-	float ambientCoeficient = .05f;
+	float ambientCoeficient = .03f;
 	result += ambientCoeficient * sampledAlbedo;
-	
+
 	fragOut = vec4(result, 1.f);
 }
