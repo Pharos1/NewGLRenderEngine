@@ -70,9 +70,7 @@ PointLight pointLight;
 SpotLight spotLight;
 
 //Materials
-Material woodTexture;
-Material checkerboardTexture;
-Material noiseTexture;
+//Material noiseTexture;
 //Texture gPosition, gNormal, gAlbedo;
 
 //Camera
