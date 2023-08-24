@@ -638,45 +638,6 @@ void draw(const Shader& shader) {
 	updateGUI();
 	guiPassQuery.end();
 }
-void renderScene(const Shader& shader) {
-	shader.use();
-	
-	//Update lights
-	//pointLight.setPos(glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
-	//pointLight.set("pointLight", mainShader);
-
-	spotLight.setPos(cam.pos);
-	spotLight.setDir(cam.front);
-	spotLight.set("spotLight", shader);
-
-	//Set shader uniforms
-	shader.setMat4("view", view);
-	shader.setVec3("viewPos", cam.pos);
-
-	//Scene draw pass
-	//shader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.002f)));
-	//modelBall.draw(0);
-
-	shader.setMat4("model", cerberusModelMat);
-	//cerberusModel.draw(0);
-
-	shader.setMat4("model", glm::mat4(1.f));
-	//entity0.draw(shader);
-	sponzaModel.draw();
-
-	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.03f)), { -15.f, 1.f, 0.f }));
-	humanModel.draw();
-
-	shader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(1000.f)));
-	checkerboardTexture.bind();
-	plane.draw();
-	checkerboardTexture.unbind();
-
-	shader.setMat4("model", cubeModelMat);
-	woodTexture.bind();
-	cube.draw();
-	woodTexture.unbind();
-}
 void updateGUI() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
