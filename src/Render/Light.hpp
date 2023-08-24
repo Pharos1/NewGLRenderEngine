@@ -8,8 +8,9 @@ private:
 	glm::vec3 color;
 
 public:
+	bool enabled;
 
-	DirLight(glm::vec3 dir, glm::vec3 color);
+	DirLight(glm::vec3 dir, glm::vec3 color, bool enabled = true);
 	DirLight() = default;
 
 	void set(const std::string& objectName, const Shader& shaderProgram) const;
@@ -26,7 +27,9 @@ private:
 	float effectiveRadius;
 
 public:
-	PointLight(glm::vec3 pos, glm::vec3 color);
+	bool enabled;
+
+	PointLight(glm::vec3 pos, glm::vec3 color, bool enabled = true);
 	PointLight() = default;
 
 	void set(const std::string& objectName, const Shader& shaderProgram) const;
@@ -44,11 +47,12 @@ private:
 	glm::vec3 color;
 
 public:
+	bool enabled;
 	float cutOff;
 	float outerCutOff;
 	float effectiveRadius;
 
-	SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float cutOff, float outerCutOff);
+	SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float cutOff, float outerCutOff, bool enabled = true);
 	SpotLight() = default;
 
 	void set(const std::string& objectName, const Shader& shaderProgram) const;
