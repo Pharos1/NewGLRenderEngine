@@ -514,13 +514,8 @@ void setupApplication() {
 	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3((10.f + 5)), false);
 	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f)), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)), false);
 
-	//Textures
-	woodTexture.addTexture("Textures/Other/Wood.png", 0);
-	checkerboardTexture.addTexture("Textures/Props/Checkerboard.jpg", 0);
-
 	//Uniforms and stuff
 	mainShader.use();
-	mainShader.setMat4("model", glm::mat4(1.f));
 	mainShader.set1f("specularExponent", 32.f);
 
 	dirLight.set("dirLight", mainShader);
@@ -553,8 +548,6 @@ void setupApplication() {
 	setupScreenRelated();
 	initImGui();
 	setupUBOs();
-
-	cam.calcFrontVec(); //Update it, so it doesn't jump on start
 
 	//Queries
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
