@@ -35,7 +35,6 @@ void cleanup();
 
 //Every frame
 void draw(const Shader& shader);
-void renderScene(const Shader& shader);
 void updateGUI();
 
 //Application Specific
@@ -64,16 +63,10 @@ glm::mat4 cerberusModelMat;
 //Objects
 Mesh cube;
 Mesh quad;
-Mesh plane;
-Model cerberusModel;
-Model ballModel;
-Model sponzaModel;
-Model humanModel;
-Entity entity0;
-Entity entityChild1;
-Entity entityChild2;
-Entity entityChild3;
-Entity entityChild4;
+Entity planeEntity;
+Entity sponzaEntity;
+Entity humanEntity;
+Entity sceneEntity;
 
 //Lights
 DirLight dirLight;
@@ -508,55 +501,26 @@ void setupApplication() {
 	view = glm::mat4(1.f);
 	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
 
-	cubeModelMat = glm::mat4(1.f);
-	cubeModelMat = glm::translate(cubeModelMat, { 0.f, .5f, 0.f });
-	cubeModelMat = glm::scale(cubeModelMat, glm::vec3(0.5f));
-
-	planeModelMat = glm::mat4(1.f);
-	planeModelMat = glm::scale(planeModelMat, { 10.f, .1f, 10.f });
-
-	cerberusModelMat = glm::mat4(1.f);
-	cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.005f));
-	cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 30.0f, 0.f));
+	//cerberusModelMat = glm::mat4(1.f);
+	//cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.005f));
+	//cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 30.0f, 0.f));
 
 	//Objects
 	cube.create(cubeVerts);
 	quad.create(quadVerts);
-	plane.create(planeVerts);
-	//entity0.model.loadModel("Models/sphere.stl");
-	//entityChild1.model.loadModel("Models/sphere.stl");
-	//entityChild2.model.loadModel("Models/sphere.stl");
-	//entityChild3.model.loadModel("Models/sphere.stl");
-	//entityChild4.model.loadModel("Models/sphere.stl");
-	//
-	//entity0.addChild(entityChild1);
-	//entityChild1.addChild(entityChild2);
-	//entityChild2.addChild(entityChild3);
-	//entityChild3.addChild(entityChild4);
-	//
-	//entity0.transform.setLocalPos(glm::vec3(0.f, 1.f, 0.f));
-	//entityChild1.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
-	//entityChild2.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
-	//entityChild3.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
-	//entityChild4.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
-	//
-	//entityChild1.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
-	//entityChild2.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
-	//entityChild3.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
-	//entityChild4.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
-	//
-	//entity0.transform.setLocalScale(glm::vec3(1.f/5.f));
 
-	std::cout << "                                                   I FEEL AS IF SPONZA X NORMAL IS THE SAME FROM BOTH SIDES. FOR SOME REASON IT FEELS LIKE OPENGL DOESNT CLAMP COLORS BETWEEN 0 and 1 But ABS() them MAYBE THE POST PROC PASS IS A PROBLEM. MAYBE RENDER THEM WITHOUT A POSTPROC PASS\n";
-	//cerberusModel.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
-	//cerberusModel.meshes[0].material.metallic.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_M.tga");
-	//cerberusModel.meshes[0].material.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
-	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
+	planeEntity.model.meshes.push_back(Mesh(planeVerts));
+	planeEntity.model.meshes[0].material.addTexture("Textures/Props/Checkerboard.jpg", 0);
+	sponzaEntity.model.loadModel("Models/Sponza/sponza.glTF");
+	humanEntity.model.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
+
+	sceneEntity.addChild(sponzaEntity);
+	sceneEntity.addChild(humanEntity);
+	sceneEntity.addChild(planeEntity);
 	
 	planeEntity.transform.setLocalScale(glm::vec3(100.f));
-	//humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
-	//ballModel.loadModel("Models/sphere.stl");
-	//ballModel.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
+	humanEntity.transform.setLocalPos(glm::vec3(-1.f, 0.f, 0.f));
+	humanEntity.transform.setLocalScale(glm::vec3(.03f));
 
 	//Lights
 	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(4.f), false);
@@ -613,7 +577,6 @@ void setupScreenRelated() {
 	postprocFB.create2D(scrWidth, scrHeight, GL_RGBA16F);
 }
 void initImGui(){
-	std::cout << "[                            MAKE UBOs work to share matrices between the shaders]\n";
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	//ImGuiIO& io = GetIO(); (void)io;
@@ -664,11 +627,11 @@ void draw(const Shader& shader) {
 	postprocFB.clear();
 
 	depthPassQuery.begin();
-	renderScene(depthPrePassShader);
+	sceneEntity.draw(depthPassShader);
 	depthPassQuery.end();
 
 	renderPassQuery.begin();
-	renderScene(shader);
+	sceneEntity.draw(shader);
 
 	//Light cube pass
 	lightBoxShader.use();
@@ -684,6 +647,7 @@ void draw(const Shader& shader) {
 	quad.draw();
 
 	renderPassQuery.end();
+
 	//Post-processing pass
 	postprocFB.unbind();
 
