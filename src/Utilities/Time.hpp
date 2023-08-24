@@ -13,15 +13,26 @@ namespace Time {
 
 	void updateDelta();
 }
+
 class Timer {
 public:
 	std::chrono::high_resolution_clock::time_point startTime;
 	std::string name;
 
 	Timer(const std::string& name);
-	Timer() = default;
-	~Timer();
 
-	Timer(const Timer&) = delete;
-	Timer& operator=(const Timer&) = delete;
+	void start();
+	void stop();
+};
+
+class ScopedTimer {
+public:
+	std::chrono::high_resolution_clock::time_point startTime;
+	std::string name;
+
+	ScopedTimer(const std::string& name);
+	~ScopedTimer();
+
+	ScopedTimer(const ScopedTimer&) = delete;
+	ScopedTimer& operator=(const ScopedTimer&) = delete;
 };

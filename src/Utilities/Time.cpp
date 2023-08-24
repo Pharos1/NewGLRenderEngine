@@ -32,12 +32,26 @@ namespace Time {
 		}
 	}
 }
-Timer::Timer(const std::string& name){
-	startTime = std::chrono::high_resolution_clock::now();
-	this->name = name;
+
+Timer::Timer(const std::string& name)
+	: name(name) {
 }
-Timer::~Timer(){
+void Timer::start() {
+	startTime = std::chrono::high_resolution_clock::now();
+}
+void Timer::stop() {
 	auto now = std::chrono::high_resolution_clock::now();
 	auto took = std::chrono::duration<float, std::chrono::milliseconds::period>(now - startTime);
 	std::cout << "[Timer] '" << name << "' took " << took << std::endl;
+}
+
+ScopedTimer::ScopedTimer(const std::string& name){
+	startTime = std::chrono::high_resolution_clock::now();
+	this->name = name;
+}
+ScopedTimer::~ScopedTimer(){
+	std::cout << "test if move semantics have default for this guy\n";
+	auto now = std::chrono::high_resolution_clock::now();
+	auto took = std::chrono::duration<float, std::chrono::milliseconds::period>(now - startTime);
+	std::cout << "[Timer] [Scoped] '" << name << "' took " << took << std::endl;
 }
