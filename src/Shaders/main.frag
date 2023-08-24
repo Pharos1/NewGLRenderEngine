@@ -10,15 +10,18 @@ uniform vec3 viewPos;
 uniform float specularExponent;
 
 struct DirLight{
+	bool enabled;
 	vec3 dir;
 	vec3 color;
 };
 struct PointLight{
+	bool enabled;
 	vec3 pos;
 	vec3 color;
 	float effectiveRadius;
 };
 struct SpotLight{
+	bool enabled;
 	vec3 pos;
 	vec3 dir;
 	vec3 color;
@@ -94,7 +97,7 @@ float geometrySmith(vec3 normalVec, vec3 viewDir, vec3 lightDir, float roughness
 }
 
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
-	if(light.color == vec3(0.f)) return vec3(0.f);
+	if(light.color == vec3(0.f) || !light.enabled) return vec3(0.f);
 	
 	vec3 lightDir = -normalize(light.dir);
 	vec3 halfwayVec = normalize(viewDir + lightDir);
@@ -122,7 +125,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 	return (kD * albedo / PI + specular) * radiance * NdotL + magicAmbient;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
-	if (light.color == vec3(0.f)) return vec3(0.f);
+	if (light.color == vec3(0.f) || !light.enabled) return vec3(0.f);
 	
 	vec3 lightDir = normalize(light.pos - worldPos);
 	vec3 halfwayVec = normalize(viewDir + lightDir);
@@ -151,7 +154,7 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, 
 	return (kD * albedo / PI + specular) * radiance * NdotL + magicAmbient;
 }
 vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
-	if(light.color == vec3(0.f)) return vec3(0.f);
+	if(light.color == vec3(0.f) || !light.enabled) return vec3(0.f);
 	
 	vec3 lightDir = normalize(light.pos - worldPos);
 	vec3 halfwayVec = normalize(viewDir + lightDir);
@@ -211,7 +214,6 @@ void main(){
 	*/
 
 	vec3 viewDir = normalize(viewPos - worldPos);
-
 	
 	vec3 baseReflectivity = vec3(.04f);
 	baseReflectivity = mix(baseReflectivity, sampledAlbedo, sampledMetallic);
