@@ -26,9 +26,9 @@ public:
 	void deleteProgram();
 
 	void set1b(const std::string& name, const bool& value) const;
-	void set1i(const std::string& name, int value, const int count = 1) const;
-	void set1ui(const std::string& name, uint32_t value, const int count = 1) const;
-	void set1f(const std::string& name, float value, const int count = 1) const;
+	void set1i(const std::string& name, const int& value, const int count = 1) const;
+	void set1ui(const std::string& name, const uint32_t& value, const int count = 1) const;
+	void set1f(const std::string& name, const float& value, const int count = 1) const;
 	void setMat3(const std::string& name, const glm::mat3& mat, const int count = 1) const;
 	void setMat4(const std::string& name, const glm::mat4& mat, const int count = 1) const;
 	void setVec2(const std::string& name, const glm::vec2& vec, const int count = 1) const;
