@@ -55,9 +55,6 @@ Shader deferredShader;
 //Transformation
 glm::mat4 view;
 glm::mat4 proj;
-glm::mat4 cubeModelMat;
-glm::mat4 planeModelMat;
-glm::mat4 cerberusModelMat;
 
 //Objects
 Mesh cube;
