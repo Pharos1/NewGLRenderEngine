@@ -173,12 +173,12 @@ std::vector<Vertex> quadVerts = {
 	{{-1.f, 1.f, 0.f}, { 0.f, 0.f, 1.f}, {0.f, 1.f}},
 };
 std::vector<Vertex> planeVerts = {
-	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f*250, 0.f*250}},
-	{{ 1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {1.f*250, 1.f*250}},
-	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f*250, 1.f*250}},
-	{{-1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {0.f*250, 0.f*250}},
-	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f*250, 0.f*250}},
-	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f*250, 1.f*250}},
+	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f*25, 0.f*25}},
+	{{ 1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {1.f*25, 1.f*25}},
+	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f*25, 1.f*25}},
+	{{-1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {0.f*25, 0.f*25}},
+	{{ 1.f, 0.f, 1.f}, { 0.f, 1.f, 0.f}, {1.f*25, 0.f*25}},
+	{{-1.f, 0.f,-1.f}, { 0.f, 1.f, 0.f}, {0.f*25, 1.f*25}},
 };
 
 //Queries
@@ -553,7 +553,7 @@ void setupApplication() {
 	//cerberusModel.meshes[0].material.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
 	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
 	
-	sponzaModel.loadModel("Models/Sponza/sponza.glTF");
+	planeEntity.transform.setLocalScale(glm::vec3(100.f));
 	//humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
 	//ballModel.loadModel("Models/sphere.stl");
 	//ballModel.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
