@@ -478,7 +478,6 @@ void setupApplication() {
 	//Shaders
 	mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 	lightBoxShader.loadShader("src/Shaders/lightBox.vert", "src/Shaders/lightBox.frag");
-	gradientSkyboxShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/gradientSkybox.frag");
 	renderQuadShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/renderQuad.frag");
 	postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postproc.frag");
 	depthPassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
