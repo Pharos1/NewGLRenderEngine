@@ -8,10 +8,7 @@ layout(binding = 1) uniform sampler2D bloomBlur;
 
 uniform float exposure;
 uniform float gamma;
-//uniform uint flags;
 uniform bool gammaOn;
-uniform bool bloomOn;
-uniform bool blurOn;
 
 uniform int tonemapMode;
 
