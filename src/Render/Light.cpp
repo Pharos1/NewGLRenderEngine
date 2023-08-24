@@ -14,14 +14,24 @@ DirLight::DirLight(glm::vec3 dir, glm::vec3 color, bool enabled)
 	: dir(dir), color(color), enabled(enabled) {
 }
 
-void DirLight::set(const std::string& objectName, const Shader& shaderProgram) const {
+void DirLight::set(const std::string& objectName, const Shader& shaderProgram) {
+	if (!changed) return;
+
 	shaderProgram.use();
 	shaderProgram.setVec3(objectName + ".dir", dir);
 	shaderProgram.setVec3(objectName + ".color", color);
 	shaderProgram.set1b(objectName + ".enabled", enabled);
+
+	changed = false;
 }
-void DirLight::setDir(glm::vec3 value) { dir = value; }
-void DirLight::setColor(glm::vec3 value) { color = value; }
+void DirLight::setDir(glm::vec3 value) {
+	dir = value;
+	changed = true;
+}
+void DirLight::setColor(glm::vec3 value) {
+	color = value;
+	changed = true;
+}
 
 glm::vec3 DirLight::getDir() const { return dir; }
 glm::vec3 DirLight::getColor() const { return color; }
@@ -31,17 +41,25 @@ PointLight::PointLight(glm::vec3 pos, glm::vec3 color, bool enabled)
 	: pos(pos), color(color), enabled(enabled) {
 }
 
-void PointLight::set(const std::string& objectName, const Shader& shaderProgram) const {
+void PointLight::set(const std::string& objectName, const Shader& shaderProgram) {
+	if (!changed) return;
+
 	shaderProgram.use();
 	shaderProgram.setVec3(objectName + ".pos", pos);
 	shaderProgram.setVec3(objectName + ".color", color);
 	shaderProgram.set1f(objectName + ".effectiveRadius", effectiveRadius);
 	shaderProgram.set1b(objectName + ".enabled", enabled);
+
+	changed = false;
 }
-void PointLight::setPos(glm::vec3 value) { pos = value; }
+void PointLight::setPos(glm::vec3 value) {
+	pos = value;
+	changed = true;
+}
 void PointLight::setColor(glm::vec3 value) {
 	effectiveRadius = calcLightRadius(color);
 	color = value;
+	changed = true;
 }
 
 glm::vec3 PointLight::getPos() const { return pos; }
@@ -52,7 +70,9 @@ SpotLight::SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float cutOff
 	: pos(pos), dir(dir), color(color), cutOff(cutOff), outerCutOff(outerCutOff), enabled(enabled) {
 }
 
-void SpotLight::set(const std::string& objectName, const Shader& shaderProgram) const {
+void SpotLight::set(const std::string& objectName, const Shader& shaderProgram) {
+	if (!changed) return;
+
 	shaderProgram.use();
 	shaderProgram.setVec3(objectName + ".pos", pos);
 	shaderProgram.setVec3(objectName + ".dir", dir);
@@ -61,12 +81,21 @@ void SpotLight::set(const std::string& objectName, const Shader& shaderProgram) 
 	shaderProgram.set1f(objectName + ".outerCutOff", outerCutOff);
 	shaderProgram.set1f(objectName + ".effectiveRadius", effectiveRadius);
 	shaderProgram.set1b(objectName + ".enabled", enabled);
+
+	changed = false;
 }
-void SpotLight::setDir(glm::vec3 value) { dir = value; }
-void SpotLight::setPos(glm::vec3 value) { pos = value; }
+void SpotLight::setDir(glm::vec3 value) {
+	dir = value;
+	changed = true;
+}
+void SpotLight::setPos(glm::vec3 value) {
+	pos = value;
+	changed = true;
+}
 void SpotLight::setColor(glm::vec3 value) {
 	effectiveRadius = calcLightRadius(color);
 	color = value;
+	changed = true;
 }
 
 glm::vec3 SpotLight::getDir() const { return dir; }
