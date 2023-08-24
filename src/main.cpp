@@ -233,15 +233,18 @@ int main() {
 	setupApplication();
 
 	double lastTime = 0;
+	double lastSpotTime = 0; //For spotLight on/off delay
 
 	while (!glfwWindowShouldClose(window)) {
 		double now = glfwGetTime();
 		
-		if (now - lastTime > 0.5) {
+		if (now - lastTime > 1) {
 			depthPassQuery.retrieveResult();
 			renderPassQuery.retrieveResult();
 			postprocQuery.retrieveResult();
 			guiPassQuery.retrieveResult();
+			lastTime = now;
+			/*
 			double depthTime = (double)depthPassQuery.getResult() / 1000000;
 			double renderTime = (double)renderPassQuery.getResult() / 1000000;
 			double postprocTime = (double)postprocQuery.getResult() / 1000000;
@@ -255,13 +258,9 @@ int main() {
 			ss << "Chrono Frame Time: " << Time::avgMsTime << "ms\n";
 
 			glfwSetWindowTitle(window, ss.str().c_str());
-
-			lastTime = now;
+			*/
 		}
 		
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDepthFunc(GL_LEQUAL);
-
 		Time::updateDelta();
 		if (mouseLocked) cam.processInput(window);
 		view = cam.getView();
@@ -281,6 +280,15 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_6)) tonemapMode = 6;
 
 		postprocShader.set1i("tonemapMode", tonemapMode);
+
+		//dirLight.enabled = glfwGetKey(window, GLFW_KEY_F) == GLFW_TRUE;
+		//spotLight.enabled = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_TRUE;
+		//pointLight.enabled = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_TRUE;
+
+		if (glfwGetKey(window, GLFW_KEY_F) && now - lastSpotTime > .2f) {
+			spotLight.enabled = !spotLight.enabled;
+			lastSpotTime = now;
+		}
 
 		spotLight.set("spotLight", mainShader);
 		dirLight.set("dirLight", mainShader);
