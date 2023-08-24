@@ -8,6 +8,7 @@
 #include "Render/Camera.hpp"
 #include "Render/Light.hpp"
 #include "Render/Framebuffer.hpp"
+#include "Render/Entity.hpp"
 #include "Utilities/Logger.hpp"
 #include "Utilities/Time.hpp"
 #include "Utilities/Query.hpp"
@@ -68,6 +69,11 @@ Model cerberusModel;
 Model ballModel;
 Model sponzaModel;
 Model humanModel;
+Entity entity0;
+Entity entityChild1;
+Entity entityChild2;
+Entity entityChild3;
+Entity entityChild4;
 
 //Lights
 DirLight dirLight;
@@ -384,18 +390,18 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, scrWidth, scrHeight);
 
 	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
-	
+
 	//Recreate framebuffers
 	setupScreenRelated();
 	setupUBOs(); //For the proj
 }
 void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 	if (mouseLocked)
-	cam.processMouse(xpos, ypos);
+		cam.processMouse(xpos, ypos);
 	else {
 		cam.lastX = xpos; //DO this so the mouse dont skip when entering in view mode
 		cam.lastY = ypos;
-}
+	}
 }
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
 	if (button == GLFW_MOUSE_BUTTON_1 && !io.WantCaptureMouse) {
@@ -412,7 +418,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		mouseLocked = false;
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		style->Alpha = windowAlpha;
-}
+	}
 }
 
 //On Application Start/End
@@ -517,25 +523,38 @@ void setupApplication() {
 	cube.create(cubeVerts);
 	quad.create(quadVerts);
 	plane.create(planeVerts);
+	//entity0.model.loadModel("Models/sphere.stl");
+	//entityChild1.model.loadModel("Models/sphere.stl");
+	//entityChild2.model.loadModel("Models/sphere.stl");
+	//entityChild3.model.loadModel("Models/sphere.stl");
+	//entityChild4.model.loadModel("Models/sphere.stl");
+	//
+	//entity0.addChild(entityChild1);
+	//entityChild1.addChild(entityChild2);
+	//entityChild2.addChild(entityChild3);
+	//entityChild3.addChild(entityChild4);
+	//
+	//entity0.transform.setLocalPos(glm::vec3(0.f, 1.f, 0.f));
+	//entityChild1.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
+	//entityChild2.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
+	//entityChild3.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
+	//entityChild4.transform.setLocalPos(glm::vec3(30.f, 0.f, 0.f));
+	//
+	//entityChild1.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
+	//entityChild2.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
+	//entityChild3.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
+	//entityChild4.transform.setLocalRot(glm::vec3(0.f, 72.f, 0.f));
+	//
+	//entity0.transform.setLocalScale(glm::vec3(1.f/5.f));
 
+	std::cout << "                                                   I FEEL AS IF SPONZA X NORMAL IS THE SAME FROM BOTH SIDES. FOR SOME REASON IT FEELS LIKE OPENGL DOESNT CLAMP COLORS BETWEEN 0 and 1 But ABS() them MAYBE THE POST PROC PASS IS A PROBLEM. MAYBE RENDER THEM WITHOUT A POSTPROC PASS\n";
 	//cerberusModel.loadModel("Models/Cerberus_by_Andrew_Maximov/Cerberus_LP.FBX");
 	//cerberusModel.meshes[0].material.metallic.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_M.tga");
 	//cerberusModel.meshes[0].material.roughness.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_R.tga");
 	//cerberusModel.meshes[0].material.normal.loadTexture("Models/Cerberus_by_Andrew_Maximov/Textures/Cerberus_N.tga");
 	
 	sponzaModel.loadModel("Models/Sponza/sponza.glTF");
-	humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
-	//loadSponz();
-	//loadHuman();
-
-	//{
-	//	std::lock_guard<std::mutex> lock(mutexLock);
-	//	Timer time("Heyl");
-	//std::jthread thread(loadSponz);
-	//std::jthread thread2(loadHuman);
-	//thread.join();
-	//thread2.join();
-	//}
+	//humanModel.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
 	//ballModel.loadModel("Models/sphere.stl");
 	//ballModel.meshes[0].material.albedo.loadTexture("Textures/Debug/white.png");
 
@@ -704,6 +723,7 @@ void renderScene(const Shader& shader) {
 	//cerberusModel.draw(0);
 
 	shader.setMat4("model", glm::mat4(1.f));
+	//entity0.draw(shader);
 	sponzaModel.draw();
 
 	shader.setMat4("model", glm::translate(glm::scale(glm::mat4(1.f), glm::vec3(.03f)), { -15.f, 1.f, 0.f }));
