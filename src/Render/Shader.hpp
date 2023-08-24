@@ -25,7 +25,7 @@ public:
 	void unuse() const;
 	void deleteProgram();
 
-	void set1b(const std::string& name, bool value, const int count = 1) const;
+	void set1b(const std::string& name, const bool& value) const;
 	void set1i(const std::string& name, int value, const int count = 1) const;
 	void set1ui(const std::string& name, uint32_t value, const int count = 1) const;
 	void set1f(const std::string& name, float value, const int count = 1) const;

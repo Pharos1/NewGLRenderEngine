@@ -145,15 +145,15 @@ void Shader::deleteProgram() {
 	this->id = 0;
 };
 
-void Shader::set1b(const std::string& name, bool value, const int count) const {
+void Shader::set1b(const std::string& name, const bool& value) const {
 	int location = glGetUniformLocation(id, name.c_str());
 
 	if (location != -1)
-		glUniform1iv(location, count, (int*)&value);
+		glUniform1i(location, value);
 	else
 		return;// std::cout << "WARNING::SHADER.H::An active uniform corresponding to the name '" << name << "' was not found!\n";
 }
-void Shader::set1i(const std::string& name, int value, const int count) const {
+void Shader::set1i(const std::string& name, const int& value, const int count) const {
 	int location = glGetUniformLocation(id, name.c_str());
 
 	if (location != -1)
@@ -161,7 +161,7 @@ void Shader::set1i(const std::string& name, int value, const int count) const {
 	else
 		return; //std::cout << "WARNING::SHADER.H::An active uniform corresponding to the name '" << name << "' was not found!\n";
 }
-void Shader::set1ui(const std::string& name, uint32_t value, const int count) const {
+void Shader::set1ui(const std::string& name, const uint32_t& value, const int count) const {
 	int location = glGetUniformLocation(id, name.c_str());
 
 	if (location != -1)
@@ -169,7 +169,7 @@ void Shader::set1ui(const std::string& name, uint32_t value, const int count) co
 	else
 		return; //std::cout << "WARNING::SHADER.H::An active uniform corresponding to the name '" << name << "' was not found!\n";
 }
-void Shader::set1f(const std::string& name, float value, const int count) const {
+void Shader::set1f(const std::string& name, const float& value, const int count) const {
 	int location = glGetUniformLocation(id, name.c_str());
 
 	if (location != -1)
