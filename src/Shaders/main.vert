@@ -11,9 +11,12 @@ out vec2 texCoord;
 out vec3 vertNormal;
 out mat3 TBN;
 
+layout (std140, binding = 0) uniform Matrices {
+	mat4 proj;
+	mat4 view;
+};
+
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
 
 void main(){
 	worldPos = (model * vec4(inPos, 1.f)).xyz;
