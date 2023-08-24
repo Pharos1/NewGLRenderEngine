@@ -187,8 +187,8 @@ void main(){
 	if(texture(albedoTex, texCoord).a < .05f) discard;
 
 	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
-	float sampledMetallic = texture(metallicTex, texCoord).r;
-	float sampledRoughness = texture(roughnessTex, texCoord).r;
+	float sampledMetallic = texture(metallicTex, texCoord).b;
+	float sampledRoughness = texture(roughnessTex, texCoord).b;
 	vec3 sampledNormal = texture(normalTex, texCoord).xyz;
 
 	vec3 fragNormal;
