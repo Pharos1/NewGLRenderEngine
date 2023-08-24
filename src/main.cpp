@@ -20,7 +20,8 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum 
 
 //Callbacks
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 //On Application Start/End
@@ -363,12 +364,30 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	//Recreate framebuffers
 	setupScreenRelated();
 }
-void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+	if (mouseLocked)
 	cam.processMouse(xpos, ypos);
+	else {
+		cam.lastX = xpos; //DO this so the mouse dont skip when entering in view mode
+		cam.lastY = ypos;
+}
+}
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
+	if (button == GLFW_MOUSE_BUTTON_1 && !io.WantCaptureMouse) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		mouseLocked = true;
+		style->Alpha = 0.3f;
+	}
 }
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_E)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		mouseLocked = false;
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		style->Alpha = windowAlpha;
+}
 }
 
 //On Application Start/End
@@ -424,12 +443,17 @@ void initDependencies() {
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	//Input setup
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouseCallback);
+	//Callbacks
+	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+	glfwSetCursorPosCallback(window, cursorPosCallback);
+	glfwSetMouseButtonCallback(window, mouseButtonCallback);
+	glfwSetKeyCallback(window, keyCallback);
+
+	if(mouseLocked) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//Background Color
 	glClearColor(0.f, 0.f, 0.f, 1.f);
+
 }
 void setupApplication() {
 	//Shaders
