@@ -30,7 +30,7 @@ mat3 ACESInputMat = { //The matrix is a transposed version of the original so it
 	vec3(0.59719f, 0.07600f, 0.02840f),
 	vec3(0.35458f, 0.90834f, 0.13383f),
 	vec3(0.04823f, 0.01566f, 0.83777f),
-};		 
+};
 mat3 ACESOutputMat = { //The matrix is a transposed version of the original so it matches the column major order of glsl
 	vec3( 1.60475f, -0.10208f, -0.00327f),
 	vec3(-0.53108f,  1.10813f, -0.07276f),
@@ -51,29 +51,6 @@ vec3 hillACES(vec3 color){
 	return color;
 }
 
-void main(){
-	vec3 result;
-
-	result = texture(colorBuffer, texCoord).rgb;
-
-	if(tonemapMode == 1) result = reinhard(result);
-	else if(tonemapMode == 2) result = reinhardExtended(result);
-	else if(tonemapMode == 3) result = uncharted2(result);
-	else if(tonemapMode == 4) result = hillACES(result);
-	else if(tonemapMode == 5) result = narkowiczACES(result);
-	else if(tonemapMode == 6) result = manualExposure(result);
-
-	if(bloomOn){
-		//result += texture(bloomBlur, texCoord).rgb;
-	}
-	if(gammaOn){
-		result = pow(result, vec3(1.f / gamma));
-	}
-	if(blurOn){
-		//Has to be implemented
-	}
-	fragOut = vec4(result, 1.f);
-}
 float luminance(vec3 color){
 	return dot(color, vec3(.2126f, .7152f, .0722f));
 }
