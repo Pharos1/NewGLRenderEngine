@@ -302,29 +302,7 @@ int main() {
 		spotLight.setDir(cam.front);
 		spotLight.set("spotLight", mainShader);
 
-		//Draw
-		postprocFB.bind();
-		postprocFB.clear();
-
-		depthPassQuery.begin();
-		renderScene(depthPrePassShader);
-		depthPassQuery.end();
-
-		renderPassQuery.begin();
 		draw(mainShader);
-		renderPassQuery.end();
-
-		//Post-processing pass
-		postprocFB.unbind();
-
-		postprocQuery.begin();
-		postprocShader.use();
-		postprocFB.texture.bind(0);
-		glDepthFunc(GL_LEQUAL);
-		quad.draw();
-		glDepthFunc(GL_LESS);
-		postprocFB.texture.unbind();
-		postprocQuery.end();
 
 		//FINALY wait for the frame to finish
 		glfwPollEvents();
@@ -573,22 +551,14 @@ void setupApplication() {
 	//Uniforms and stuff
 	mainShader.use();
 	mainShader.setMat4("model", glm::mat4(1.f));
-	mainShader.setMat4("view", view);
-	mainShader.setMat4("proj", proj);
 	mainShader.set1f("specularExponent", 32.f);
 
 	dirLight.set("dirLight", mainShader);
 	pointLight.set("pointLight", mainShader);
 	spotLight.set("spotLight", mainShader);
 
-	mainShader.use();
-	mainShader.setMat4("model", glm::mat4(1.f));
-	mainShader.setMat4("view", view);
-
 	lightBoxShader.use();
 	lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
-	lightBoxShader.setMat4("view", view);
-	lightBoxShader.setMat4("proj", proj);
 
 	postprocShader.use();
 	postprocShader.set1b("gammaOn", gammaOn);
@@ -608,8 +578,10 @@ void setupApplication() {
 	depthPassQuery.loadQuery(GL_TIME_ELAPSED);
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
 	postprocQuery.loadQuery(GL_TIME_ELAPSED);
+	guiPassQuery.loadQuery(GL_TIME_ELAPSED);
 
 	setupScreenRelated();
+	initImGui();
 	setupUBOs();
 
 	cam.calcFrontVec(); //Update it, so it doesn't jump on start
@@ -691,6 +663,19 @@ void draw(const Shader& shader) {
 	gradientSkyboxShader.setMat4("view", view);
 
 	quad.draw();
+
+	renderPassQuery.end();
+	//Post-processing pass
+	postprocFB.unbind();
+
+	postprocQuery.begin();
+	postprocShader.use();
+	postprocFB.texture.bind(0);
+	glDepthFunc(GL_LEQUAL);
+	quad.draw();
+	glDepthFunc(GL_LESS);
+	postprocFB.texture.unbind();
+	postprocQuery.end();
 
 	guiPassQuery.begin();
 	updateGUI();
