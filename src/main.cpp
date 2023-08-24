@@ -219,7 +219,7 @@ int main() {
 		glDepthFunc(GL_LEQUAL);
 
 		Time::updateDelta();
-		cam.processInput(window);
+		if (mouseLocked) cam.processInput(window);
 		view = cam.getView();
 
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
