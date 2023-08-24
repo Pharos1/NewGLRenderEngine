@@ -47,7 +47,6 @@ float farPlane = 100.f;
 //Shaders
 Shader mainShader;
 Shader lightBoxShader;
-Shader gradientSkyboxShader;
 Shader renderQuadShader;
 Shader postprocShader;
 Shader depthPrePassShader;
@@ -484,7 +483,7 @@ void initDependencies() {
 	if(mouseLocked) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//Background Color
-	glClearColor(0.f, 0.f, 0.f, 1.f);
+	glClearColor(1.f, 1.f, 1.f, 1.f);
 
 }
 void setupApplication() {
@@ -639,12 +638,6 @@ void draw(const Shader& shader) {
 	lightBoxShader.setVec3("lightColor", pointLight.getColor());
 	lightBoxShader.setVec3("lightPos", pointLight.getPos());
 	cube.draw();
-
-	//Ugly skybox pass
-	gradientSkyboxShader.use();
-	gradientSkyboxShader.setMat4("view", view);
-
-	quad.draw();
 
 	renderPassQuery.end();
 
