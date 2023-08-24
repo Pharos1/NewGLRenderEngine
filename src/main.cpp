@@ -28,6 +28,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void initDependencies();
 void setupApplication();
 void setupScreenRelated();
+void setupUBOs();
 void cleanup();
 
 //Every frame
@@ -177,6 +178,9 @@ Query depthPassQuery;
 Query renderPassQuery;
 Query postprocQuery;
 
+//UBOs
+GLuint uboMatrices;
+
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
 
@@ -217,6 +221,10 @@ int main() {
 		Time::updateDelta();
 		cam.processInput(window);
 		view = cam.getView();
+
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		postprocShader.use();
 
@@ -363,6 +371,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 
 	//Recreate framebuffers
 	setupScreenRelated();
+	setupUBOs(); //For the proj
 }
 void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 	if (mouseLocked)
@@ -546,6 +555,7 @@ void setupApplication() {
 	postprocQuery.loadQuery(GL_TIME_ELAPSED);
 
 	setupScreenRelated();
+	setupUBOs();
 
 	cam.calcFrontVec(); //Update it, so it doesn't jump on start
 
@@ -553,18 +563,20 @@ void setupApplication() {
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
 
 }
-void setupScreenRelated() {
-	mainShader.use();
-	mainShader.setMat4("proj", proj);
+void setupUBOs() {
+	if (!uboMatrices) {
+		glGenBuffers(1, &uboMatrices);
 
-	lightBoxShader.use();
-	lightBoxShader.setMat4("proj", proj);
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	depthPrePassShader.use();
-	depthPrePassShader.setMat4("proj", proj);
+		glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+	}
 
-	//Framebuffers
-	postprocFB.create2D(scrWidth, scrHeight, GL_RGBA16F);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(proj));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 void cleanup() {
 	glfwTerminate();
