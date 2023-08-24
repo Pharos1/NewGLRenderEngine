@@ -16,12 +16,16 @@
 ## Harder TODOs
 * Frustum Culling with scene graph
 * Skyboxes. Cubemap and HDRI.
-* CSM (Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL)
+* CSM <!--Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL) -->
 * Texture reuse optimization for models.
 * Quaternions
 * Infinite Grid. [This](http://asliceofrendering.com/scene%20helper/2020/01/05/InfiniteGrid/) is a helpful blog post
 * ECS (Not sure)
 * Make vao, vbo and ebo raii wrappers and remove mesh's destructor, copy constructor and move operator.
+* Application wrapper
+* Cleanup the setupApplication func
+* Make default roughness and metalness if no image is found. Maybe check size of specific texture and use color based on that.
+* For some reason the gpu takes like a ms less than the cpu. Maybe use my wacky technique, first draw then do the math.
 
 ## Todo for things I am not sure about
 * Check Occlusion Query feature and use it instead for Occlusion Culling
@@ -34,7 +38,8 @@
 
 ## Problems
 * Because we use index drawing, the normals get interpolated between edges of a triangle which is not very pleasant and at angles makes rendering seem very wrong.
-
+* For some reason the gpu takes like a ms less than the cpu. Maybe use my wacky technique, first draw then do the math. 
+* FXAA looks wrong. Maybe try on the old engine. Something with precision is possible to cause the problem.
 <!---
 ## Passes (I have to minimize them, and there will be a lot more)
 * Depth Pre-pass
