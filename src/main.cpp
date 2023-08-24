@@ -262,7 +262,6 @@ int main() {
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-		postprocShader.use();
 
 		if (glfwGetKey(window, GLFW_KEY_0)) tonemapMode = 0;
 		if (glfwGetKey(window, GLFW_KEY_1)) tonemapMode = 1;
@@ -272,6 +271,7 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_5)) tonemapMode = 5;
 		if (glfwGetKey(window, GLFW_KEY_6)) tonemapMode = 6;
 
+		postprocShader.use();
 		postprocShader.set1i("tonemapMode", tonemapMode);
 
 		if (glfwGetKey(window, GLFW_KEY_F) && now - lastSpotTime > .2f) {
@@ -279,21 +279,18 @@ int main() {
 			lastSpotTime = now;
 		}
 
+		spotLight.setPos(cam.pos);
+		spotLight.setDir(cam.front);
+
 		spotLight.set("spotLight", mainShader);
 		dirLight.set("dirLight", mainShader);
 		pointLight.set("pointLight", mainShader);
 
-		//Update lights
-		//pointLight.setPos(glm::vec3(0.f, .2f, (glm::sin(glfwGetTime()) + 1.4f) / 5.f);
-		//pointLight.set("pointLight", mainShader);
-
-		spotLight.setPos(cam.pos);
-		spotLight.setDir(cam.front);
-		spotLight.set("spotLight", mainShader);
+		mainShader.use();
+		mainShader.setVec3("viewPos", cam.pos);
 
 		draw(mainShader);
 
-		//FINALY wait for the frame to finish
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
