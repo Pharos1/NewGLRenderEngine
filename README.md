@@ -40,6 +40,10 @@
 * Because we use index drawing, the normals get interpolated between edges of a triangle which is not very pleasant and at angles makes rendering seem very wrong.
 * For some reason the gpu takes like a ms less than the cpu. Maybe use my wacky technique, first draw then do the math. 
 * FXAA looks wrong. Maybe try on the old engine. Something with precision is possible to cause the problem.
+
+## Ideas for an actual name for the engine
+* PenumbraEngine (first I have to implement shadows though)
+
 <!---
 ## Passes (I have to minimize them, and there will be a lot more)
 * Depth Pre-pass
