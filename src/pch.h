@@ -26,6 +26,7 @@
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
+#include <variant>
 
 //Windows API
 #include <Windows.h>
