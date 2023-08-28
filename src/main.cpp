@@ -480,7 +480,6 @@ void initDependencies() {
 
 }
 void setupApplication() {
-	std::cout << "[                                            SHOULD INIT GLAD AND STUFF IN THE APPLICATION WRAPPER CLASS constructor\n";
 	//Shaders
 	mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 	lightBoxShader.loadShader("src/Shaders/lightBox.vert", "src/Shaders/lightBox.frag");
