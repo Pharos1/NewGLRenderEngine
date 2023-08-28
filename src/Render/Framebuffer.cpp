@@ -55,6 +55,9 @@ void Framebuffer::create1D(GLuint width, GLenum internalFormat, GLenum format, G
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
 
+	texture.mipmapping = false;
+	texture.setFilterMin(GL_LINEAR);
+	texture.setFilterMax(GL_LINEAR);
 	texture.create1D(width, internalFormat, format, type, nullptr);
 
 	bind();
@@ -84,6 +87,9 @@ void Framebuffer::create2D(GLuint width, GLuint height, GLenum internalFormat, G
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
 
+	texture.mipmapping = false;
+	texture.setFilterMin(GL_LINEAR);
+	texture.setFilterMax(GL_LINEAR);
 	texture.create2D(width, height, internalFormat, format, type, nullptr);
 
 	bind();
@@ -113,6 +119,9 @@ void Framebuffer::create3D(GLuint width, GLuint height, GLuint depth, GLenum int
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
 
+	texture.mipmapping = false;
+	texture.setFilterMin(GL_LINEAR);
+	texture.setFilterMax(GL_LINEAR);
 	texture.create3D(width, height, depth, internalFormat, format, type, nullptr);
 
 	bind();
