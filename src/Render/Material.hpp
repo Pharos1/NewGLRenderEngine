@@ -4,7 +4,7 @@
 
 class Material {
 public:
-	std::vector<std::pair<Texture, GLuint>> textures;
+	std::vector<std::pair<std::variant<std::unique_ptr<Texture>, Texture*>, GLuint>> textures; //Note/Todo: Very wacky system. Does the job done, but it is messy and it would be better if I can come up with cleaner solution
 
 	Material() = default;
 
@@ -14,5 +14,6 @@ public:
 	void deleteMaterial();
 
 	void addTexture(const std::string& path, const GLuint unit = 0);
+	void addTexture(Texture* texture, const GLuint unit = 0);
 	//Todo: maybe a removeTexture func
 };
