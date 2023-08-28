@@ -21,7 +21,7 @@ Texture::Texture(Texture&& other) noexcept {
 	std::swap(format, other.format);
 	std::swap(type, other.type);
 	std::swap(filterMin, other.filterMin);
-	std::swap(filterMax, other.filterMax);
+	std::swap(filterMag, other.filterMag);
 	std::swap(wrapS, other.wrapS);
 	std::swap(wrapT, other.wrapT);
 	std::swap(wrapR, other.wrapR);
@@ -43,7 +43,7 @@ Texture& Texture::operator=(Texture&& other) noexcept {
 	std::swap(format, other.format);
 	std::swap(type, other.type);
 	std::swap(filterMin, other.filterMin);
-	std::swap(filterMax, other.filterMax);
+	std::swap(filterMag, other.filterMag);
 	std::swap(wrapS, other.wrapS);
 	std::swap(wrapT, other.wrapT);
 	std::swap(wrapR, other.wrapR);
@@ -74,7 +74,7 @@ void Texture::deleteTexture() {
 	format = GL_RGBA;
 	type = GL_UNSIGNED_BYTE;
 	filterMin = GL_LINEAR_MIPMAP_LINEAR;
-	filterMax = GL_LINEAR;
+	filterMag = GL_LINEAR;
 	wrapS = GL_REPEAT; //Wrap X
 	wrapT = GL_REPEAT; //Wrap Y
 	wrapR = GL_REPEAT; //Wrap Z
@@ -104,7 +104,7 @@ void Texture::create1D(GLuint width, GLenum internalFormat, GLenum format, GLenu
 	bind();
 	glTexImage1D(target, 0, internalFormat, width, 0, format, type, data);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
-	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMax);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
 	if (mipmapping)
 		glGenerateMipmap(target);
@@ -126,7 +126,7 @@ void Texture::create2D(GLuint width, GLuint height, GLenum internalFormat, GLenu
 	bind();
 	glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
-	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMax);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
 	if (mipmapping)
 		glGenerateMipmap(target);
@@ -148,7 +148,7 @@ void Texture::create3D(GLuint width, GLuint height, GLuint depth, GLenum interna
 	bind();
 	glTexImage3D(target, 0, internalFormat, width, height, depth, 0, format, type, data);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
-	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMax);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
 	if (mipmapping)
 		glGenerateMipmap(target);
@@ -162,6 +162,7 @@ void Texture::setFilterMin(GLenum filter) {
 void Texture::setFilterMax(GLenum filter) {
 	bind();
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 }
 void Texture::setWrapS(GLenum wrapMethod) {
 	bind();
