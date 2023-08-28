@@ -9,7 +9,7 @@
 
 class Model {
 public:
-	std::vector<Texture> loadedTextures;
+	std::vector<std::pair<Texture*, std::string>> loadedTextures;
 	std::vector<Mesh> meshes;
 	std::string directory;
 

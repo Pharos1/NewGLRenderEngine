@@ -107,21 +107,20 @@ void Model::loadMaterial(Material& meshMaterial, GLuint unit, const aiMaterial* 
 	std::string path = this->directory + "/" + texturePath.C_Str();
 	std::replace(path.begin(), path.end(), '\\', '/');
 
-	//bool skip = false; //              NO OPTIMIZATION
-	//for (int i = 0; i < loadedTextures.size(); i++) {
-	//	//auto [loadedPath, loadedID] = loadedTextures[i];
-	//	std::string loadedPath = loadedTextures[i].path;
-	//	if (loadedPath == path) {
-	//		skip = true;
-	//
-	//		texture = loadedID;
-	//
-	//		break;
-	//	}
-	//}
-	//if (!skip) {
-		//textureID = TextureNS::loadTexture(path.c_str());
-	meshMaterial.addTexture(path, unit);
-		//loadedTextures.push_back();
-	//}
+	bool skip = false;
+	for (int i = 0; i < loadedTextures.size(); i++) {
+		auto& [texture, loadedPath] = loadedTextures[i];
+
+		if (loadedPath == path) {
+			skip = true;
+	
+			meshMaterial.addTexture(texture, unit);
+	
+			break;
+		}
+	}
+	if (!skip) {
+		meshMaterial.addTexture(path, unit);
+		loadedTextures.emplace_back(std::get<std::unique_ptr<Texture>>(meshMaterial.textures.back().first).get(), path);
+	}
 }
