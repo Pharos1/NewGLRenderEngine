@@ -15,13 +15,14 @@ private:
 	GLenum wrapS = GL_REPEAT; //Wrap X
 	GLenum wrapT = GL_REPEAT; //Wrap Y
 	GLenum wrapR = GL_REPEAT; //Wrap Z
-	bool mipmapping = true;
 
 	GLuint width = 0;
 	GLuint height = 0;
 	GLuint depth = 0;
 
 public:
+	bool mipmapping = true;
+
 	Texture() = default;
 	~Texture();
 
