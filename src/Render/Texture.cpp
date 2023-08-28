@@ -157,24 +157,28 @@ void Texture::create3D(GLuint width, GLuint height, GLuint depth, GLenum interna
 
 void Texture::setFilterMin(GLenum filter) {
 	bind();
-	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
+	this->filterMin = filter;
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
 }
-void Texture::setFilterMax(GLenum filter) {
+void Texture::setFilterMag(GLenum filter) {
 	bind();
-	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+	this->filterMin = filter;
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 }
 void Texture::setWrapS(GLenum wrapMethod) {
 	bind();
-	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapMethod);
+	this->wrapS = wrapMethod;
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
 }
 void Texture::setWrapT(GLenum wrapMethod) {
 	bind();
-	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapMethod);
+	this->wrapT = wrapMethod;
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
 }
 void Texture::setWrapR(GLenum wrapMethod) {
 	bind();
-	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapMethod);
+	this->wrapR = wrapMethod;
+	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapR);
 }
 
 GLuint Texture::getID() const { return this->id; }
