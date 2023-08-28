@@ -51,6 +51,7 @@ Shader renderQuadShader;
 Shader postprocShader;
 Shader depthPassShader;
 Shader deferredShader;
+Shader fxaaShader;
 
 //Transformation
 glm::mat4 view;
@@ -79,6 +80,7 @@ Camera cam({ 0.f, .15f, .35f });
 
 //Framebuffers
 Framebuffer postprocFB;
+Framebuffer fxaaFB;
 
 //Object Data
 /*
@@ -371,6 +373,9 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 
 	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
 
+	fxaaShader.use();
+	fxaaShader.setVec2("inverseScreenSize", glm::vec2(1.f / scrWidth, 1.f / scrHeight));
+
 	//Recreate framebuffers
 	setupScreenRelated();
 	setupUBOs(); //For the proj
@@ -483,6 +488,7 @@ void setupApplication() {
 	postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postproc.frag");
 	depthPassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
 	deferredShader.loadShader("src/Shaders/main.vert", "src/Shaders/deferred.frag");
+	fxaaShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/fxaa.frag");
 
 	//Transformation
 	view = glm::mat4(1.f);
@@ -527,17 +533,18 @@ void setupApplication() {
 
 	postprocShader.use();
 	postprocShader.set1b("gammaOn", gammaOn);
-	postprocShader.set1b("fxaaEnabled", fxaaEnabled);
 	postprocShader.set1f("exposure", exposure);
 	postprocShader.set1f("gamma", gamma);
 	postprocShader.set1f("maxRadiance", maxRadiance);
 	postprocShader.set1i("tonemapMode", tonemapMode);
 
-	postprocShader.setVec2("inverseScreenSize", glm::vec2(1.f / scrWidth, 1.f / scrHeight));
-	postprocShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
-	postprocShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
-	postprocShader.set1i("ITERATIONS", ITERATIONS);
-	postprocShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
+	fxaaShader.use();
+	fxaaShader.set1b("fxaaEnabled", fxaaEnabled);
+	fxaaShader.setVec2("inverseScreenSize", glm::vec2(1.f / scrWidth, 1.f / scrHeight));
+	fxaaShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
+	fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
+	fxaaShader.set1i("ITERATIONS", ITERATIONS);
+	fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
 
 	//Queries
 	depthPassQuery.loadQuery(GL_TIME_ELAPSED);
@@ -555,6 +562,7 @@ void setupApplication() {
 void setupScreenRelated() {
 	//Framebuffers
 	postprocFB.create2D(scrWidth, scrHeight, GL_RGBA16F);
+	fxaaFB.create2D(scrWidth, scrHeight, GL_RGBA, GL_RGBA, NULL);
 }
 void initImGui(){
 	IMGUI_CHECKVERSION();
@@ -624,6 +632,7 @@ void draw(const Shader& shader) {
 
 	//Post-processing pass
 	postprocFB.unbind();
+	fxaaFB.bind();
 
 	postprocQuery.begin();
 	postprocShader.use();
@@ -632,6 +641,15 @@ void draw(const Shader& shader) {
 	quad.draw();
 	glDepthFunc(GL_LESS);
 	postprocFB.texture.unbind();
+
+	fxaaFB.unbind();
+
+	fxaaShader.use();
+	fxaaFB.texture.bind(0);
+	glDepthFunc(GL_LEQUAL);
+	quad.draw();
+	glDepthFunc(GL_LESS);
+
 	postprocQuery.end();
 
 	guiPassQuery.begin();
@@ -657,8 +675,8 @@ void updateGUI() {
 		if (ImGui::TreeNode("Post-processing")) {
 			ImGui::Text("Anti-Aliasing");
 			if (ImGui::Checkbox("FXAA", &fxaaEnabled)) {
-				postprocShader.use();
-				postprocShader.set1b("fxaaEnabled", fxaaEnabled);
+				fxaaShader.use();
+				fxaaShader.set1b("fxaaEnabled", fxaaEnabled);
 			}
 
 			ImGui::NewLine();
@@ -666,23 +684,23 @@ void updateGUI() {
 			ImGui::Text("FXAA Options");
 			ImGui::BeginDisabled(!fxaaEnabled);
 			if (ImGui::SliderFloat("FXAA_EDGE_THRESHOLD_MIN", &EDGE_THRESHOLD_MIN, 0, 1, "%.4f")) {
-				postprocShader.use();
-				postprocShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
+				fxaaShader.use();
+				fxaaShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
 				fxaaRevert = true;
 			}
 			if (ImGui::SliderFloat("FXAA_EDGE_THRESHOLD_MAX", &EDGE_THRESHOLD_MAX, 0, 1, "%.4f")) {
-				postprocShader.use();
-				postprocShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
+				fxaaShader.use();
+				fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
 				fxaaRevert = true;
 			}
-			if (ImGui::SliderInt("FXAA_ITERATIONS", &ITERATIONS, 0, 100)) {
-				postprocShader.use();
-				postprocShader.set1i("ITERATIONS", ITERATIONS);
+			if (ImGui::SliderInt("FXAA_ITERATIONS", &ITERATIONS, 0, 12)) {
+				fxaaShader.use();
+				fxaaShader.set1i("ITERATIONS", ITERATIONS);
 				fxaaRevert = true;
 			}
 			if (ImGui::SliderFloat("FXAA_SUBPIXEL_QUALITY", &SUBPIXEL_QUALITY, 0, 1, "%.4f")) {
-				postprocShader.use();
-				postprocShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
+				fxaaShader.use();
+				fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
 				fxaaRevert = true;
 			}
 			if (fxaaRevert) {
@@ -692,11 +710,11 @@ void updateGUI() {
 					ITERATIONS = DEFAULT_ITERATIONS;
 					SUBPIXEL_QUALITY = DEFAULT_SUBPIXEL_QUALITY;
 
-					postprocShader.use();
-					postprocShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
-					postprocShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
-					postprocShader.set1i("ITERATIONS", ITERATIONS);
-					postprocShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
+					fxaaShader.use();
+					fxaaShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
+					fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
+					fxaaShader.set1i("ITERATIONS", ITERATIONS);
+					fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
 
 					fxaaRevert = false;
 				}
