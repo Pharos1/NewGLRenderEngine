@@ -524,6 +524,8 @@ void initDependencies() {
 
 }
 void setupApplication() {
+	ScopedTimer t1("Setup Application");
+
 	//Shaders
 	mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 	lightBoxShader.loadShader("src/Shaders/lightBox.vert", "src/Shaders/lightBox.frag");
