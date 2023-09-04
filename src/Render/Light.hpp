@@ -7,9 +7,9 @@ private:
 	glm::vec3 dir;
 	glm::vec3 color;
 
-	bool changed = true;
 
 public:
+	bool changed = true;
 	bool enabled;
 
 	DirLight(glm::vec3 dir, glm::vec3 color, bool enabled = true);
@@ -28,9 +28,9 @@ private:
 	glm::vec3 color;
 	float effectiveRadius;
 
-	bool changed;
 
 public:
+	bool changed = true;
 	bool enabled = true;
 
 	PointLight(glm::vec3 pos, glm::vec3 color, bool enabled = true);
@@ -51,9 +51,8 @@ private:
 	glm::vec3 color;
 	float effectiveRadius;
 
-	bool changed = true;
-
 public:
+	bool changed = true;
 	bool enabled;
 	float cutOff;
 	float outerCutOff;
