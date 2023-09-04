@@ -68,10 +68,12 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene, aiNode* node) {
 			vector.z = mesh->mTangents[i].z;
 			vertex.tangent = vector;
 
+			/*
 			vector.x = mesh->mBitangents[i].x;
 			vector.y = mesh->mBitangents[i].y;
 			vector.z = mesh->mBitangents[i].z;
 			vertex.bitangent = vector;
+			*/
 		}
 		else
 			vertex.texCoord = glm::vec2(0.0f, 0.0f);

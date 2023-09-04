@@ -1,8 +1,8 @@
 #include "../pch.h"
 #include "Vertex.hpp"
 
-Vertex::Vertex(glm::vec3 pos, glm::vec3 normal, glm::vec2 texCoord, glm::vec3 tangent, glm::vec3 bitangent)
-	: pos(pos), normal(normal), texCoord(texCoord), tangent(tangent), bitangent(bitangent) {
+Vertex::Vertex(glm::vec3 pos, glm::vec3 normal, glm::vec2 texCoord, glm::vec3 tangent)// , glm::vec3 bitangent)
+	: pos(pos), normal(normal), texCoord(texCoord), tangent(tangent) {//, bitangent(bitangent) {
 }
 
 void Vertex::setAttribArrays() {
@@ -10,12 +10,12 @@ void Vertex::setAttribArrays() {
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
-	glEnableVertexAttribArray(4);
+	//glEnableVertexAttribArray(4);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, pos)));
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tangent)));
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
+	//glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
 }
 
 std::ostream& operator<<(std::ostream& os, const glm::vec4& other) {
