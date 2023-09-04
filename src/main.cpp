@@ -539,10 +539,6 @@ void setupApplication() {
 	view = glm::mat4(1.f);
 	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
 
-	//cerberusModelMat = glm::mat4(1.f);
-	//cerberusModelMat = glm::scale(cerberusModelMat, glm::vec3(0.005f));
-	//cerberusModelMat = glm::translate(cerberusModelMat, glm::vec3(0.f, 30.0f, 0.f));
-
 	//Objects
 	cube.create(cubeVerts);
 	quad.create(quadVerts);
@@ -695,7 +691,6 @@ void draw(const Shader& shader) {
 
 	//Light cube pass
 	lightBoxShader.use();
-	lightBoxShader.setMat4("view", view);
 	lightBoxShader.setVec3("lightColor", pointLight.getColor());
 	lightBoxShader.setVec3("lightPos", pointLight.getPos());
 	cube.draw();
