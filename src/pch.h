@@ -37,7 +37,10 @@
 #include <GLFW/glfw3.h>
 #include <GLM/glm.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <GLM/gtc/type_ptr.hpp>
+#include <GLM/gtc/quaternion.hpp>
+#include <GLM/gtx/quaternion.hpp>
+#include <GLM/ext/quaternion_common.hpp>
 #include <SOIL2/stb_image.h>
 #include <SOIL2/SOIL2.h>
 #include <ASSIMP/Importer.hpp>
