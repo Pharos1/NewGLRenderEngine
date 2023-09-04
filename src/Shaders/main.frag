@@ -6,6 +6,11 @@ in vec3 vertNormal;
 in vec2 texCoord;
 in mat3 TBN;
 
+layout (std140, binding = 0) uniform Matrices {
+	mat4 proj;
+	mat4 view;
+};
+
 uniform vec3 viewPos;
 uniform float specularExponent;
 
@@ -34,15 +39,80 @@ uniform DirLight dirLight;
 uniform PointLight pointLight;
 uniform SpotLight spotLight;
 
-
 layout(binding = 0) uniform sampler2D albedoTex;
 layout(binding = 1) uniform sampler2D metallicTex;
 layout(binding = 2) uniform sampler2D roughnessTex;
 layout(binding = 3) uniform sampler2D normalTex;
 
+//CSM
+layout(std140, binding = 1) uniform LightSpaceMatrices {
+	mat4 lightSpaceMatrices[16];
+};
+layout(binding = 4) uniform sampler2DArray shadowMap;
+uniform int cascadeCount;
+uniform float farPlane;
+uniform float cascadePlaneDistances[16];
+
 //layout(binding = 0) uniform sampler2D gPositionBuffer;
 //layout(binding = 1) uniform sampler2D gNormalBuffer;
 //layout(binding = 2) uniform sampler2D gAlbedoBuffer;
+
+float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent, float metallicValue);
+float attenuation(float dist);
+vec3 getNormalFromMap();
+
+vec3 fresnelSchlick(float cosTheta, vec3 baseReflectivity);
+float distributionGGX(vec3 normalVec, vec3 halfwayVec, float roughness);
+float geometrySchlickGGX(float NdotV, float roughness);
+float geometrySmith(vec3 normalVec, vec3 viewDir, vec3 lightDir, float roughness);
+
+vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity);
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity);
+vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity);
+float calcShadow(vec3 normal, vec3 lightDir);
+
+void main(){
+	if(texture(albedoTex, texCoord).a < .05f) discard;
+
+	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
+	float sampledMetallic = texture(metallicTex, texCoord).b;
+	float sampledRoughness = texture(roughnessTex, texCoord).b;
+	vec3 sampledNormal = texture(normalTex, texCoord).xyz;
+
+	vec3 fragNormal;
+	if(sampledNormal != vec3(0.f) && TBN != mat3(0.f)){
+		fragNormal = normalize(TBN * (sampledNormal * 2.f - 1.f));
+	}
+	else{
+		fragNormal = normalize(vertNormal);
+	}
+
+	/*vec4 gPosition = texture(gPositionBuffer, texCoord);
+	vec4 gNormal = texture(gNormalBuffer, texCoord);
+	vec3 gAlbedo = texture(gAlbedoBuffer, texCoord).rgb;
+
+	vec3 sampledAlbedo = pow(gAlbedo, vec3(2.2f));
+	float sampledMetallic = gPosition.a;
+	float sampledRoughness = gNormal.a;
+	vec3 fragNormal = gNormal.rgb;
+	vec3 worldPos = gPosition.rgb;
+	*/
+
+	vec3 viewDir = normalize(viewPos - worldPos);
+	
+	vec3 baseReflectivity = vec3(.04f);
+	baseReflectivity = mix(baseReflectivity, sampledAlbedo, sampledMetallic);
+
+	vec3 result = vec3(0.f);
+	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+
+	float ambientCoeficient = .03f;
+	result += ambientCoeficient * sampledAlbedo;
+
+	fragOut = vec4(result, 1.f);
+}
 
 float spec(vec3 lightDir, vec3 normal, vec3 viewDir, float specularExponent, float metallicValue){
 	vec3 halfwayVec = normalize(lightDir + viewDir);
@@ -122,7 +192,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 
 	float NdotL = max(dot(normal, lightDir), 0.f);
 	vec3 magicAmbient = albedo * .25f;
-	return (kD * albedo / PI + specular) * radiance * NdotL + magicAmbient;
+	return (kD * albedo / PI + specular) * radiance * NdotL * (1.f-calcShadow(normal, -lightDir)) + magicAmbient;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
 	if (light.color == vec3(0.f) || !light.enabled) return vec3(0.f);
@@ -185,46 +255,52 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 
 	return (kD * albedo / PI + specular) * radiance * NdotL * intensity;
 }
-
-void main(){
-	if(texture(albedoTex, texCoord).a < .05f) discard;
-
-	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
-	float sampledMetallic = texture(metallicTex, texCoord).b;
-	float sampledRoughness = texture(roughnessTex, texCoord).b;
-	vec3 sampledNormal = texture(normalTex, texCoord).xyz;
-
-	vec3 fragNormal;
-	if(sampledNormal != vec3(0.f) && TBN != mat3(0.f)){
-		fragNormal = normalize(TBN * (sampledNormal * 2.f - 1.f));
+float calcShadow(vec3 normal, vec3 lightDir) {
+	//Select cascade layer
+	vec4 fragPosViewSpace = view * vec4(worldPos, 1.f);
+	float depthValue = abs(fragPosViewSpace.z);
+		
+	int layer = -1;
+	for (int i = 0; i < cascadeCount; i++) {
+		if (depthValue < cascadePlaneDistances[i]) {
+			layer = i;
+			break;
+		}
 	}
-	else{
-		fragNormal = normalize(vertNormal);
+	if (layer == -1) {
+		layer = cascadeCount;
 	}
-
-	/*vec4 gPosition = texture(gPositionBuffer, texCoord);
-	vec4 gNormal = texture(gNormalBuffer, texCoord);
-	vec3 gAlbedo = texture(gAlbedoBuffer, texCoord).rgb;
-
-	vec3 sampledAlbedo = pow(gAlbedo, vec3(2.2f));
-	float sampledMetallic = gPosition.a;
-	float sampledRoughness = gNormal.a;
-	vec3 fragNormal = gNormal.rgb;
-	vec3 worldPos = gPosition.rgb;
-	*/
-
-	vec3 viewDir = normalize(viewPos - worldPos);
 	
-	vec3 baseReflectivity = vec3(.04f);
-	baseReflectivity = mix(baseReflectivity, sampledAlbedo, sampledMetallic);
+	vec4 fragPosLightSpace = lightSpaceMatrices[layer] * vec4(worldPos, 1.f);
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	projCoords = projCoords * .5f + .5f;
+	
+	//Keep the shadow at 0.f when outside the far_plane region of the light's frustum.
+	if(projCoords.z > 1.f) {
+		return 0.f;
+	}
 
-	vec3 result = vec3(0.f);
-	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
-	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
-	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	float maxBias = .05f;
+	float minBias = .005f;
+	float bias = max(maxBias * (1.f - dot(normal, lightDir)), minBias);
+	const float biasModifier = 6.f;//0.5f;
+	if (layer == cascadeCount) {
+		bias *= 1 / (farPlane * biasModifier);
+	}
+	else {
+		bias *= 1 / (cascadePlaneDistances[layer] * biasModifier);
+	}
 
-	float ambientCoeficient = .03f;
-	result += ambientCoeficient * sampledAlbedo;
+	//PCF
+	float shadow = 0.f;
+	vec2 texelSize = 1.f / vec2(textureSize(shadowMap, 0));
+	for(int x = -1; x <= 1; ++x) {
+		for(int y = -1; y <= 1; ++y) {
+			float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, layer)).r; 
+			shadow += (projCoords.z - bias) > pcfDepth ? 1.f : 0.f;
+		}
+	}
+	shadow /= 9.f;
 
-	fragOut = vec4(result, 1.f);
+	return shadow;
 }

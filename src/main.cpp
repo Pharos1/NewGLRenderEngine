@@ -37,12 +37,17 @@ void cleanup();
 void draw(const Shader& shader);
 void updateGUI();
 
+//CSM
+std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view);
+glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane);
+std::vector<glm::mat4> getLightSpaceMatrices();
+
 //Application Specific
 uint32_t scrWidth = 1280;
 uint32_t scrHeight = 920;
 GLFWwindow* window;
-float nearPlane = .05f;
-float farPlane = 100.f;
+float nearPlane = .1f;
+float farPlane = 500.f;
 
 //Shaders
 Shader mainShader;
@@ -52,6 +57,7 @@ Shader postprocShader;
 Shader depthPassShader;
 Shader deferredShader;
 Shader fxaaShader;
+Shader CSMShader;
 
 //Transformation
 glm::mat4 view;
@@ -81,6 +87,7 @@ Camera cam({ 0.f, .15f, .35f });
 //Framebuffers
 Framebuffer postprocFB;
 Framebuffer fxaaFB;
+Framebuffer shadowFB;
 
 //Object Data
 /*
@@ -175,6 +182,7 @@ Query depthPassQuery;
 Query renderPassQuery;
 Query postprocQuery;
 Query guiPassQuery;
+Query shadowPassQuery;
 
 //GUI
 ImGuiIO io;
@@ -219,6 +227,12 @@ bool fxaaEnabled = true;
 
 //UBOs
 GLuint uboMatrices;
+GLuint lightMatricesUBO;
+
+//CSM
+float cascadeCount = 3;
+std::vector<float> shadowCascadeLevels;// { farPlane / 50.0f, farPlane / 25.0f, farPlane / 10.0f, farPlane / 2.0f };
+GLuint shadowResolution = 2048;
 
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
@@ -238,6 +252,7 @@ int main() {
 			renderPassQuery.retrieveResult();
 			postprocQuery.retrieveResult();
 			guiPassQuery.retrieveResult();
+			shadowPassQuery.retrieveResult();
 			lastTime = now;
 			/*
 			double depthTime = (double)depthPassQuery.getResult() / 1000000;
@@ -290,6 +305,33 @@ int main() {
 
 		mainShader.use();
 		mainShader.setVec3("viewPos", cam.pos);
+
+		const auto lightMatrices = getLightSpaceMatrices();
+		glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
+		for (size_t i = 0; i < lightMatrices.size(); i++) {
+			glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4x4), sizeof(glm::mat4x4), &lightMatrices[i]);
+		}
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		
+		shadowPassQuery.begin();
+		glDepthFunc(GL_LESS);
+		glViewport(0, 0, shadowResolution, shadowResolution);
+		shadowFB.bind();
+		shadowFB.clear();
+		glCullFace(GL_FRONT);
+		glEnable(GL_DEPTH_CLAMP); //From a comment by https://disqus.com/by/disqus_XCUOEk9iLH/? on disqus.
+		sceneEntity.draw(CSMShader);
+		glDisable(GL_DEPTH_CLAMP);
+		glCullFace(GL_BACK);
+		shadowFB.unbind();
+		glViewport(0, 0, scrWidth, scrHeight);
+		shadowPassQuery.end();
+		
+		//Framebuffer::clear();
+		//renderQuadShader.use();
+		//glDepthFunc(GL_LEQUAL);
+		//shadowFB.texture.bind(0);
+		//quad.draw();
 
 		draw(mainShader);
 
@@ -488,6 +530,7 @@ void setupApplication() {
 	depthPassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
 	deferredShader.loadShader("src/Shaders/main.vert", "src/Shaders/deferred.frag");
 	fxaaShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/fxaa.frag");
+	CSMShader.loadShader("src/Shaders/CSM.vert", "src/Shaders/empty.frag", "src/Shaders/CSM.geom");
 
 	//Transformation
 	view = glm::mat4(1.f);
@@ -515,13 +558,14 @@ void setupApplication() {
 	humanEntity.transform.setLocalScale(glm::vec3(.03f));
 
 	//Lights
-	dirLight = DirLight({ -1.f, -1.f, -1.f }, glm::vec3(4.f), false);
+	dirLight = DirLight({ -1.f, -4.f, -1.f }, glm::vec3(4.f), true);
 	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3((10.f + 5)), false);
 	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f)), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)), false);
 
 	//Uniforms and stuff
 	mainShader.use();
 	mainShader.set1f("specularExponent", 32.f);
+	mainShader.set1f("farPlane", farPlane);
 
 	dirLight.set("dirLight", mainShader);
 	pointLight.set("pointLight", mainShader);
@@ -550,7 +594,18 @@ void setupApplication() {
 	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
 	postprocQuery.loadQuery(GL_TIME_ELAPSED);
 	guiPassQuery.loadQuery(GL_TIME_ELAPSED);
+	shadowPassQuery.loadQuery(GL_TIME_ELAPSED);
 
+	//Generate Cascade Levels
+	for (uint32_t i = 1; i < cascadeCount + 1; i++) { //Found this powerful algorithm at: https://github.com/1393650770/Opengl-Shadow-CSM. If you have any info on it, let me know. I am interested in how this bad boy works.
+		float k = (float)i / (float)cascadeCount;
+		shadowCascadeLevels.push_back(0.8f * (nearPlane * powf(fov, k)) + (1 - 0.8f) * (nearPlane + (farPlane - nearPlane) * k));
+	}
+	mainShader.use();
+	mainShader.set1i("cascadeCount", cascadeCount);
+	for (uint32_t i = 0; i < cascadeCount; i++) {
+		mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
+	}
 	setupScreenRelated();
 	initImGui();
 	setupUBOs();
@@ -560,8 +615,15 @@ void setupApplication() {
 }
 void setupScreenRelated() {
 	//Framebuffers
-	postprocFB.create2D(scrWidth, scrHeight, GL_RGBA16F);
-	fxaaFB.create2D(scrWidth, scrHeight, GL_RGBA, GL_RGBA, NULL);
+	postprocFB.create2D(GL_TEXTURE_2D, scrWidth, scrHeight, GL_RGBA16F);
+	fxaaFB.create2D(GL_TEXTURE_2D, scrWidth, scrHeight, GL_RGBA, GL_RGBA, NULL);
+
+	shadowFB.createLayered2D(GL_TEXTURE_2D_ARRAY, shadowResolution, shadowResolution, cascadeCount + 1, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, NULL, GL_DEPTH_ATTACHMENT, GL_FLOAT);
+	shadowFB.texture.setBorderColor({ 1.f, 1.f, 1.f, 1.f });
+	shadowFB.texture.setFilterMin(GL_NEAREST);
+	shadowFB.texture.setFilterMag(GL_NEAREST);
+	shadowFB.texture.setWrapS(GL_CLAMP_TO_BORDER);
+	shadowFB.texture.setWrapT(GL_CLAMP_TO_BORDER);
 }
 void initImGui(){
 	IMGUI_CHECKVERSION();
@@ -587,14 +649,23 @@ void setupUBOs() {
 
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 		glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+		glBindBufferBase(GL_UNIFORM_BUFFER, 0, uboMatrices);
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-		glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
 	}
 
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(proj));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	if (!lightMatricesUBO) {
+		glGenBuffers(1, &lightMatricesUBO);
+	
+		glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
+		glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 16, NULL, GL_STATIC_DRAW);
+		glBindBufferBase(GL_UNIFORM_BUFFER, 1, lightMatricesUBO);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	
+}
 }
 void cleanup() {
 	ImGui_ImplOpenGL3_Shutdown();
@@ -618,6 +689,7 @@ void draw(const Shader& shader) {
 	depthPassQuery.end();
 
 	renderPassQuery.begin();
+	shadowFB.texture.bind(4);
 	sceneEntity.draw(shader);
 
 	//Light cube pass
@@ -763,6 +835,17 @@ void updateGUI() {
 			mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 
 			mainShader.use();
+			mainShader.set1f("farPlane", farPlane);
+			mainShader.set1i("cascadeCount", cascadeCount);
+			for (uint32_t i = 0; i < cascadeCount; i++) {
+				mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
+			}
+			setupUBOs();
+
+			dirLight.changed = true;
+			pointLight.changed = true;
+			spotLight.changed = true;
+
 			dirLight.set("dirLight", mainShader);
 			pointLight.set("pointLights", mainShader);
 			spotLight.set("spotLight", mainShader);
@@ -810,6 +893,7 @@ void updateGUI() {
 			ImGui::Text(("GPU time: " + std::to_string(gpuFrametime) + " ms").c_str());
 			ImGui::NewLine();
 
+			ImGui::Text(("CSM Pass:       " + std::to_string(shadowPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 			ImGui::Text(("Depth Pass:     " + std::to_string(depthPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 			ImGui::Text(("Render Pass:    " + std::to_string(renderPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 			ImGui::Text(("GUI Pass:       " + std::to_string(guiPassQuery.getResult() / 1000000.0) + "  ms").c_str());
@@ -840,4 +924,94 @@ void updateGUI() {
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+//CSM
+std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
+	const auto inv = glm::inverse(proj * view);
+
+	std::vector<glm::vec4> frustumCorners;
+	for (unsigned int x = 0; x < 2; ++x) {
+		for (unsigned int y = 0; y < 2; ++y) {
+			for (unsigned int z = 0; z < 2; ++z) {
+				const glm::vec4 pt =
+					inv * glm::vec4(
+						2.0f * x - 1.0f,
+						2.0f * y - 1.0f,
+						2.0f * z - 1.0f,
+						1.0f);
+				frustumCorners.push_back(pt / pt.w);
+			}
+		}
+	}
+
+	return frustumCorners;
+}
+glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane) {
+	const auto proj = glm::perspective(
+		glm::radians(fov),
+		(float)scrWidth / (float)scrHeight,
+		nearPlane,
+		farPlane
+	);
+
+	auto corners = getFrustumCornersWorldSpace(proj, view);
+	glm::vec3 center = glm::vec3(0, 0, 0);
+	for (const auto& v : corners) {
+		center += glm::vec3(v);
+	}
+	center /= corners.size();
+
+	const auto lightView = glm::lookAt(center - glm::normalize(dirLight.getDir()), center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+
+	float minX = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float minY = std::numeric_limits<float>::max();
+	float maxY = std::numeric_limits<float>::lowest();
+	float minZ = std::numeric_limits<float>::max();
+	float maxZ = std::numeric_limits<float>::lowest();
+	for (const auto& v : corners) {
+		const auto trf = lightView * v;
+		minX = std::min(minX, trf.x);
+		maxX = std::max(maxX, trf.x);
+		minY = std::min(minY, trf.y);
+		maxY = std::max(maxY, trf.y);
+		minZ = std::min(minZ, trf.z);
+		maxZ = std::max(maxZ, trf.z);
+	}
+
+	//Tune this parameter according to the scene. Changes the precision of the depth value that is written.
+	constexpr float zMult = 1.f;
+	if (minZ < 0) {
+		minZ *= zMult;
+	}
+	else {
+		minZ /= zMult;
+	}
+	if (maxZ < 0) {
+		maxZ /= zMult;
+	}
+	else {
+		maxZ *= zMult;
+	}
+
+	glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+
+	return lightProjection * lightView;
+}
+std::vector<glm::mat4> getLightSpaceMatrices() {
+	std::vector<glm::mat4> ret;
+	for (uint32_t i = 0; i < cascadeCount + 1; i++) {
+		if (i == 0) {
+			ret.push_back(getLightSpaceMatrix(nearPlane, shadowCascadeLevels[i]));
+		}
+		else if (i < cascadeCount) {
+			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
+		}
+		else {
+			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], farPlane));
+		}
+	}
+	return ret;
 }
