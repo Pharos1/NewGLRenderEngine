@@ -520,8 +520,7 @@ void initDependencies() {
 	if(mouseLocked) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//Background Color
-	glClearColor(1.f, 1.f, 1.f, 1.f);
-
+	glClearColor(1.f, 0.f, 1.f, 1.f);
 }
 void setupApplication() {
 	ScopedTimer t1("Setup Application");
