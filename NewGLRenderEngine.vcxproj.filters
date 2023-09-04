@@ -181,5 +181,9 @@
     <None Include="src\Shaders\basicQuad.vert" />
     <None Include="src\Shaders\deferred.frag" />
     <None Include="src\Shaders\depthPrePass.frag" />
+    <None Include="src\Shaders\fxaa.frag" />
+    <None Include="src\Shaders\empty.frag" />
+    <None Include="src\Shaders\CSM.geom" />
+    <None Include="src\Shaders\CSM.vert" />
   </ItemGroup>
 </Project>
