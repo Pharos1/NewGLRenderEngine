@@ -115,7 +115,7 @@ void Framebuffer::create3D(GLenum textureTarget, GLuint width, GLuint height, GL
 	this->width = width;
 	this->height = height;
 	this->depth = depth;
-	
+
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
 
@@ -143,23 +143,23 @@ void Framebuffer::create3D(GLenum textureTarget, GLuint width, GLuint height, GL
 	unbind();
 	texture.unbind();
 }
-void Framebuffer::create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
-	width = width;
-	height = height;
-	depth = depth;
-	
+void Framebuffer::createLayered2D(GLenum textureTarget, GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	this->width = width;
+	this->height = height;
+	this->depth = depth;
+
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
 
 	texture.mipmapping = false;
 	texture.setFilterMin(GL_LINEAR);
 	texture.setFilterMag(GL_LINEAR);
-	texture.create3D(width, height, depth, internalFormat, format, type, nullptr);
+	texture.create3D(textureTarget, width, height, depth, internalFormat, format, type, nullptr);
 
 	bind();
 	texture.bind();
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0);
+	glFramebufferTexture(GL_FRAMEBUFFER, attachment, texture.getID(), 0);
 
 	if (RBOFormat) {
 		glBindRenderbuffer(GL_RENDERBUFFER, RBO);

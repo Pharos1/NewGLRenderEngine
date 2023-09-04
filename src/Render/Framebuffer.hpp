@@ -32,4 +32,5 @@ public:
 	void create1D(GLenum textureTarget, GLuint width, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
 	void create2D(GLenum textureTarget, GLuint width, GLuint height, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
 	void create3D(GLenum textureTarget, GLuint width, GLuint height, GLuint depth, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
+	void createLayered2D(GLenum textureTarget, GLuint width, GLuint height, GLuint depth, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum RBOFormat = GL_DEPTH24_STENCIL8, GLenum attachment = GL_COLOR_ATTACHMENT0, GLenum type = GL_UNSIGNED_BYTE);
 };
