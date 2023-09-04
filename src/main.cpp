@@ -563,7 +563,7 @@ void setupApplication() {
 	//Lights
 	dirLight = DirLight({ -1.f, -4.f, -1.f }, glm::vec3(4.f), true);
 	pointLight = PointLight({ 0.f, .20f, .8f }, glm::vec3((10.f + 5)), false);
-	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f)), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(15.f)), false);
+	spotLight = SpotLight(cam.pos, cam.front, glm::vec3((20.f + 60.f)), 12.5f, 15.f, false);
 
 	//Uniforms and stuff
 	mainShader.use();
