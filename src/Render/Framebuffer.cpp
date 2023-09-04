@@ -47,10 +47,10 @@ void Framebuffer::deleteFramebuffer() {
 	depth = 0;
 }
 
-void Framebuffer::create1D(GLuint width, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
-	width = width;
-	height = 0;
-	depth = 0;
+void Framebuffer::create1D(GLenum textureTarget, GLuint width, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	this->width = width;
+	this->height = 0;
+	this->depth = 0;
 	
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
@@ -58,7 +58,39 @@ void Framebuffer::create1D(GLuint width, GLenum internalFormat, GLenum format, G
 	texture.mipmapping = false;
 	texture.setFilterMin(GL_LINEAR);
 	texture.setFilterMag(GL_LINEAR);
-	texture.create1D(width, internalFormat, format, type, nullptr);
+	texture.create1D(textureTarget, width, internalFormat, format, type, nullptr);
+
+	bind();
+	texture.bind();
+
+	glFramebufferTexture1D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0);
+
+	if (RBOFormat) {
+		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, RBOFormat, width, height);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+	}
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		mLog("Failed to create framebuffer!", Log::LogError, "FRAMEBUFFER");
+
+	unbind();
+	texture.unbind();
+}
+void Framebuffer::create2D(GLenum textureTarget, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	this->width = width;
+	this->height = height;
+	this->depth = 0;
+	
+	if (!FBO) glGenFramebuffers(1, &FBO);
+	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
+
+	texture.mipmapping = false;
+	texture.setFilterMin(GL_LINEAR);
+	texture.setFilterMag(GL_LINEAR);
+	texture.create2D(textureTarget, width, height, internalFormat, format, type, nullptr);
 
 	bind();
 	texture.bind();
@@ -79,10 +111,10 @@ void Framebuffer::create1D(GLuint width, GLenum internalFormat, GLenum format, G
 	unbind();
 	texture.unbind();
 }
-void Framebuffer::create2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
-	width = width;
-	height = height;
-	depth = 0;
+void Framebuffer::create3D(GLenum textureTarget, GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum RBOFormat, GLenum attachment, GLenum type) {
+	this->width = width;
+	this->height = height;
+	this->depth = depth;
 	
 	if (!FBO) glGenFramebuffers(1, &FBO);
 	if (!RBO && RBOFormat) glGenRenderbuffers(1, &RBO);
@@ -90,12 +122,12 @@ void Framebuffer::create2D(GLuint width, GLuint height, GLenum internalFormat, G
 	texture.mipmapping = false;
 	texture.setFilterMin(GL_LINEAR);
 	texture.setFilterMag(GL_LINEAR);
-	texture.create2D(width, height, internalFormat, format, type, nullptr);
+	texture.create3D(textureTarget, width, height, depth, internalFormat, format, type, nullptr);
 
 	bind();
 	texture.bind();
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0);
+	glFramebufferTexture3D(GL_FRAMEBUFFER, attachment, texture.getTarget(), texture.getID(), 0, depth);
 
 	if (RBOFormat) {
 		glBindRenderbuffer(GL_RENDERBUFFER, RBO);
