@@ -187,7 +187,8 @@ void Texture::setWrapR(GLenum wrapMethod) {
 GLuint Texture::getID() const { return this->id; }
 GLuint Texture::getWidth() const { return width; }
 GLuint Texture::getHeight() const { return height; }
-GLenum Texture::getTarget() const { return target; };
+GLuint Texture::getDepth() const { return depth; }
+GLenum Texture::getTarget() const { return target; }
 
 void Texture::loadSTBI2D(const std::string& path, GLenum internalFormat, GLenum format, GLenum type, bool invertY, GLenum desiredChannels) {
 	GLint width, height, channels;

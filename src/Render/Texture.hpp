@@ -50,6 +50,7 @@ public:
 	GLuint getID() const;
 	GLuint getWidth() const;
 	GLuint getHeight() const;
+	GLuint getDepth() const;
 	GLenum getTarget() const;
 
 	void loadSTBI2D(const std::string& path, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, bool invertY = true, GLenum desiredChannels = STBI_rgb_alpha);
