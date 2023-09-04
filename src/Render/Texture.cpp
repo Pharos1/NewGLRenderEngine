@@ -107,6 +107,8 @@ void Texture::create1D(GLenum target, GLuint width, GLenum internalFormat, GLenu
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
+	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapR);
 	if (mipmapping)
 		glGenerateMipmap(target);
 	unbind();
@@ -130,6 +132,8 @@ void Texture::create2D(GLenum target, GLuint width, GLuint height, GLenum intern
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
+	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapR);
 	if (mipmapping)
 		glGenerateMipmap(target);
 	unbind();
@@ -153,6 +157,8 @@ void Texture::create3D(GLenum target, GLuint width, GLuint height, GLuint depth,
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
+	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapR);
 	if (mipmapping)
 		glGenerateMipmap(target);
 	unbind();
