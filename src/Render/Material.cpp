@@ -29,7 +29,6 @@ bool Material::empty() const {
 void Material::deleteMaterial() {
 	for (auto& [texture, unit] : textures) {
 		if (texture.index() == 0) std::get<std::unique_ptr<Texture>>(texture)->deleteTexture();
-		else std::get<Texture*>(texture)->deleteTexture();
 	}
 	textures.clear();
 }
