@@ -6,7 +6,7 @@ class Texture {
 private:
 	GLuint id = 0;
 
-	GLenum target = GL_TEXTURE_2D;
+	GLenum target = 0;
 	GLenum internalFormat = GL_RGBA;
 	GLenum format = GL_RGBA;
 	GLenum type = GL_UNSIGNED_BYTE;
