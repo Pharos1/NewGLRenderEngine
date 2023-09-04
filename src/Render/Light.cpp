@@ -77,8 +77,8 @@ void SpotLight::set(const std::string& objectName, const Shader& shaderProgram) 
 	shaderProgram.setVec3(objectName + ".pos", pos);
 	shaderProgram.setVec3(objectName + ".dir", dir);
 	shaderProgram.setVec3(objectName + ".color", color);
-	shaderProgram.set1f(objectName + ".cutOff", cutOff);
-	shaderProgram.set1f(objectName + ".outerCutOff", outerCutOff);
+	shaderProgram.set1f(objectName + ".cutOff", glm::cos(glm::radians(cutOff)));
+	shaderProgram.set1f(objectName + ".outerCutOff", glm::cos(glm::radians(outerCutOff)));
 	shaderProgram.set1f(objectName + ".effectiveRadius", effectiveRadius);
 	shaderProgram.set1b(objectName + ".enabled", enabled);
 
