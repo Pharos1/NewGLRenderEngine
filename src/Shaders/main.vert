@@ -3,7 +3,6 @@ layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoord;
 layout(location = 3) in vec3 inTangent;
-layout(location = 4) in vec3 inBitangent;
 
 out vec3 worldPos;
 
@@ -27,14 +26,14 @@ void main(){
 	mat3 normalMatrix = transpose(inverse(mat3(model))); //Transpose is really expensive
 	vertNormal = normalize(normalMatrix * inNormal);
 
-	if(inTangent == vec3(0.f) || inBitangent == vec3(0.f))
+	if(inTangent == vec3(0.f))// || inBitangent == vec3(0.f))
 		TBN = mat3(0.f);
 	else{
 		vec3 T = normalize(normalMatrix * inTangent);
-		vec3 B = normalize(normalMatrix * inBitangent);
-		//118
-		//T = normalize(T - dot(T, vertNormal) * vertNormal);
-		//vec3 B = cross(vertNormal, T); use bitangent inside model.cpp
+		//vec3 B = normalize(normalMatrix * inBitangent);
+
+		T = normalize(T - dot(T, vertNormal) * vertNormal); //A little slower, but helps prevent wrong TBN matrices. Described by Joey at https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+		vec3 B = cross(vertNormal, T);
 		
 		TBN = mat3(T, B, vertNormal);
 	}
