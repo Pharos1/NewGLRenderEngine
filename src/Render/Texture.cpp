@@ -183,6 +183,11 @@ void Texture::setWrapR(GLenum wrapMethod) {
 	this->wrapR = wrapMethod;
 	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapR);
 }
+void Texture::setBorderColor(std::array<float, 4> color) {
+	if (empty()) return;
+	bind();
+	glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color.data());
+}
 
 GLuint Texture::getID() const { return this->id; }
 GLuint Texture::getWidth() const { return width; }

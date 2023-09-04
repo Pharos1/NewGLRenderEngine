@@ -46,6 +46,7 @@ public:
 	void setWrapS(GLenum wrapMethod);
 	void setWrapT(GLenum wrapMethod);
 	void setWrapR(GLenum wrapMethod);
+	void setBorderColor(std::array<float, 4> color);
 
 	GLuint getID() const;
 	GLuint getWidth() const;
