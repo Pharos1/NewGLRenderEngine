@@ -37,9 +37,9 @@ public:
 	void deleteTexture();
 	bool empty() const;
 
-	void create1D(GLuint width, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
-	void create2D(GLuint width, GLuint height, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
-	void create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
+	void create1D(GLenum target, GLuint width, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
+	void create2D(GLenum target, GLuint width, GLuint height, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
+	void create3D(GLenum target, GLuint width, GLuint height, GLuint depth, GLenum internalFormat = GL_RGBA, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, void* data = nullptr);
 
 	void setFilterMin(GLenum filter);
 	void setFilterMag(GLenum filter);

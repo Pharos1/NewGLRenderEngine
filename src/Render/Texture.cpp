@@ -69,7 +69,7 @@ void Texture::deleteTexture() {
 
 	id = 0; //Default
 
-	target = GL_TEXTURE_2D;
+	target = 0;
 	internalFormat = GL_RGBA;
 	format = GL_RGBA;
 	type = GL_UNSIGNED_BYTE;
@@ -88,15 +88,16 @@ bool Texture::empty() const {
 	return !this->id;
 }
 
-void Texture::create1D(GLuint width, GLenum internalFormat, GLenum format, GLenum type, void* data){
+void Texture::create1D(GLenum target, GLuint width, GLenum internalFormat, GLenum format, GLenum type, void* data){
 	glGenTextures(1, &id);
 
-	width = width;
-	height = 0;
-	depth = 0;
-	internalFormat = internalFormat;
-	format = format;
-	type = type;
+	this->width = width;
+	this->height = 0;
+	this->depth = 0;
+	this->internalFormat = internalFormat;
+	this->format = format;
+	this->type = type;
+	this->target = target;
 
 	if (target != GL_TEXTURE_1D)
 		nLog("Incorrect target used!", Log::LogError, "Texture::create1D");
@@ -110,15 +111,16 @@ void Texture::create1D(GLuint width, GLenum internalFormat, GLenum format, GLenu
 		glGenerateMipmap(target);
 	unbind();
 }
-void Texture::create2D(GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum type, void* data) {
+void Texture::create2D(GLenum target, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum type, void* data) {
 	glGenTextures(1, &id);
 
-	width = width;
-	height = height;
-	depth = 0;
-	internalFormat = internalFormat;
-	format = format;
-	type = type;
+	this->width = width;
+	this->height = height;
+	this->depth = 0;
+	this->internalFormat = internalFormat;
+	this->format = format;
+	this->type = type;
+	this->target = target;
 
 	if (target != GL_TEXTURE_2D)
 		nLog("Incorrect target used!", Log::LogError, "Texture::create2D");
@@ -132,15 +134,16 @@ void Texture::create2D(GLuint width, GLuint height, GLenum internalFormat, GLenu
 		glGenerateMipmap(target);
 	unbind();
 }
-void Texture::create3D(GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum type, void* data) {
+void Texture::create3D(GLenum target, GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum type, void* data) {
 	glGenTextures(1, &id);
 
-	width = width;
-	height = height;
-	depth = depth;
-	internalFormat = internalFormat;
-	format = format;
-	type = type;
+	this->width = width;
+	this->height = height;
+	this->depth = depth;
+	this->internalFormat = internalFormat;
+	this->format = format;
+	this->type = type;
+	this->target = target;
 
 	if (target != GL_TEXTURE_3D)
 		nLog("Incorrect target used!", Log::LogError, "Texture::create3D");
@@ -192,6 +195,6 @@ void Texture::loadSTBI2D(const std::string& path, GLenum internalFormat, GLenum 
 	stbi_set_flip_vertically_on_load(invertY);
 
 	void* data = stbi_load(path.c_str(), &width, &height, &channels, desiredChannels);
-	create2D(width, height, internalFormat, format, type, data);
+	create2D(GL_TEXTURE_2D, width, height, internalFormat, format, type, data);
 	stbi_image_free(data);
 }
