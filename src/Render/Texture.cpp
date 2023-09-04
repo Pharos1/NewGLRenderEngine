@@ -98,7 +98,7 @@ void Texture::create1D(GLenum target, GLuint width, GLenum internalFormat, GLenu
 	this->format = format;
 	this->type = type;
 	this->target = target;
-
+	
 	bind();
 	glTexImage1D(target, 0, internalFormat, width, 0, format, type, data);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
@@ -165,28 +165,38 @@ void Texture::create3D(GLenum target, GLuint width, GLuint height, GLuint depth,
 }
 
 void Texture::setFilterMin(GLenum filter) {
-	bind();
 	this->filterMin = filter;
+
+	if (empty()) return;
+	bind();
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
 }
 void Texture::setFilterMag(GLenum filter) {
-	bind();
 	this->filterMin = filter;
+
+	if (empty()) return;
+	bind();
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMag);
 }
 void Texture::setWrapS(GLenum wrapMethod) {
-	bind();
 	this->wrapS = wrapMethod;
+
+	if (empty()) return;
+	bind();
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
 }
 void Texture::setWrapT(GLenum wrapMethod) {
-	bind();
 	this->wrapT = wrapMethod;
+
+	if (empty()) return;
+	bind();
 	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
 }
 void Texture::setWrapR(GLenum wrapMethod) {
-	bind();
 	this->wrapR = wrapMethod;
+
+	if (empty()) return;
+	bind();
 	glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapR);
 }
 void Texture::setBorderColor(std::array<float, 4> color) {
