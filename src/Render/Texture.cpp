@@ -99,9 +99,6 @@ void Texture::create1D(GLenum target, GLuint width, GLenum internalFormat, GLenu
 	this->type = type;
 	this->target = target;
 
-	if (target != GL_TEXTURE_1D)
-		nLog("Incorrect target used!", Log::LogError, "Texture::create1D");
-	
 	bind();
 	glTexImage1D(target, 0, internalFormat, width, 0, format, type, data);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
@@ -127,9 +124,6 @@ void Texture::create2D(GLenum target, GLuint width, GLuint height, GLenum intern
 	this->type = type;
 	this->target = target;
 
-	if (target != GL_TEXTURE_2D)
-		nLog("Incorrect target used!", Log::LogError, "Texture::create2D");
-
 	bind();
 	glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
@@ -154,9 +148,6 @@ void Texture::create3D(GLenum target, GLuint width, GLuint height, GLuint depth,
 	this->format = format;
 	this->type = type;
 	this->target = target;
-
-	if (target != GL_TEXTURE_3D)
-		nLog("Incorrect target used!", Log::LogError, "Texture::create3D");
 
 	bind();
 	glTexImage3D(target, 0, internalFormat, width, height, depth, 0, format, type, data);
