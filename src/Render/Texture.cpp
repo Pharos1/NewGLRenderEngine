@@ -89,7 +89,7 @@ bool Texture::empty() const {
 }
 
 void Texture::create1D(GLenum target, GLuint width, GLenum internalFormat, GLenum format, GLenum type, void* data){
-	glGenTextures(1, &id);
+	if (empty()) glGenTextures(1, &id);
 
 	this->width = width;
 	this->height = 0;
@@ -112,7 +112,7 @@ void Texture::create1D(GLenum target, GLuint width, GLenum internalFormat, GLenu
 	unbind();
 }
 void Texture::create2D(GLenum target, GLuint width, GLuint height, GLenum internalFormat, GLenum format, GLenum type, void* data) {
-	glGenTextures(1, &id);
+	if (empty()) glGenTextures(1, &id);
 
 	this->width = width;
 	this->height = height;
@@ -135,7 +135,7 @@ void Texture::create2D(GLenum target, GLuint width, GLuint height, GLenum intern
 	unbind();
 }
 void Texture::create3D(GLenum target, GLuint width, GLuint height, GLuint depth, GLenum internalFormat, GLenum format, GLenum type, void* data) {
-	glGenTextures(1, &id);
+	if (empty()) glGenTextures(1, &id);
 
 	this->width = width;
 	this->height = height;
