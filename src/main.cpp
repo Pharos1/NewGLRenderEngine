@@ -183,6 +183,7 @@ Query renderPassQuery;
 Query postprocQuery;
 Query guiPassQuery;
 Query shadowPassQuery;
+Query fxaaPassQuery;
 
 //GUI
 ImGuiIO io;
@@ -253,6 +254,7 @@ int main() {
 			postprocQuery.retrieveResult();
 			guiPassQuery.retrieveResult();
 			shadowPassQuery.retrieveResult();
+			fxaaPassQuery.retrieveResult();
 			lastTime = now;
 			/*
 			double depthTime = (double)depthPassQuery.getResult() / 1000000;
@@ -595,6 +597,7 @@ void setupApplication() {
 	postprocQuery.loadQuery(GL_TIME_ELAPSED);
 	guiPassQuery.loadQuery(GL_TIME_ELAPSED);
 	shadowPassQuery.loadQuery(GL_TIME_ELAPSED);
+	fxaaPassQuery.loadQuery(GL_TIME_ELAPSED);
 
 	//Generate Cascade Levels
 	for (uint32_t i = 1; i < cascadeCount + 1; i++) { //Found this powerful algorithm at: https://github.com/1393650770/Opengl-Shadow-CSM. If you have any info on it, let me know. I am interested in how this bad boy works.
@@ -609,9 +612,6 @@ void setupApplication() {
 	setupScreenRelated();
 	initImGui();
 	setupUBOs();
-
-	//Queries
-	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
 }
 void setupScreenRelated() {
 	//Framebuffers
@@ -712,16 +712,17 @@ void draw(const Shader& shader) {
 	quad.draw();
 	glDepthFunc(GL_LESS);
 	postprocFB.texture.unbind();
+	postprocQuery.end();
 
 	fxaaFB.unbind();
 
+	fxaaPassQuery.begin();
 	fxaaShader.use();
 	fxaaFB.texture.bind(0);
 	glDepthFunc(GL_LEQUAL);
 	quad.draw();
 	glDepthFunc(GL_LESS);
-
-	postprocQuery.end();
+	fxaaPassQuery.end();
 
 	guiPassQuery.begin();
 	updateGUI();
@@ -888,7 +889,7 @@ void updateGUI() {
 			ImGui::NewLine();
 
 			ImGui::Text("GPU Times [Queries]");
-			double gpuFrametime = (depthPassQuery.getResult() + renderPassQuery.getResult() + guiPassQuery.getResult() + postprocQuery.getResult()) / 1000000.0;
+			double gpuFrametime = (depthPassQuery.getResult() + renderPassQuery.getResult() + guiPassQuery.getResult() + postprocQuery.getResult() + shadowPassQuery.getResult() + fxaaPassQuery.getResult()) / 1000000.0;
 			//Text(("Approx. CPU time: " + std::to_string(1000 / io.Framerate - gpuFrametime) + " ms").c_str());
 			ImGui::Text(("GPU time: " + std::to_string(gpuFrametime) + " ms").c_str());
 			ImGui::NewLine();
@@ -898,6 +899,7 @@ void updateGUI() {
 			ImGui::Text(("Render Pass:    " + std::to_string(renderPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 			ImGui::Text(("GUI Pass:       " + std::to_string(guiPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 			ImGui::Text(("Post-Proc Pass: " + std::to_string(postprocQuery.getResult() / 1000000.0) + "  ms").c_str());
+			ImGui::Text(("FXAA Pass:      " + std::to_string(fxaaPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 		}
 	if (ImGui::CollapsingHeader("Software & Hardware Info")) {
 		ImGui::Text(("OpenGL Version: " + openGLVersion).c_str());
