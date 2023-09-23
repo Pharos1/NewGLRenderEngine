@@ -47,7 +47,7 @@ uint32_t scrWidth = 1280;
 uint32_t scrHeight = 920;
 GLFWwindow* window;
 float nearPlane = .1f;
-float farPlane = 500.f;
+float farPlane = 250.f;
 
 //Shaders
 Shader mainShader;
