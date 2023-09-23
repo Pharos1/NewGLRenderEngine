@@ -257,7 +257,7 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 }
 float calcShadow(vec3 normal, vec3 lightDir) {
 	//Select cascade layer
-	vec4 fragPosViewSpace = view * vec4(worldPos, 1.f);
+	vec4 fragPosViewSpace = view * vec4(worldPos, 1.f); //Make this just calculate the depth, not the whole position
 	float depthValue = abs(fragPosViewSpace.z);
 		
 	int layer = -1;
@@ -275,7 +275,7 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	projCoords = projCoords * .5f + .5f;
 	
-	//Keep the shadow at 0.f when outside the far_plane region of the light's frustum.
+	//Keep the shadow at 0.f when outside the far plane region of the light's frustum.
 	if(projCoords.z > 1.f) {
 		return 0.f;
 	}
