@@ -987,8 +987,8 @@ glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane) {
 		maxZ = std::max(maxZ, trf.z);
 	}
 
-	//Tune this parameter according to the scene. Changes the precision of the depth value that is written.
-	constexpr float zMult = 1.f;
+	//Tune this parameter according to the scene. Changes the depth of the light frustum. Therefor changes the precision of the depth value that is written to the buffer.
+	constexpr float zMult = 10.f;
 	if (minZ < 0) {
 		minZ *= zMult;
 	}
