@@ -596,16 +596,24 @@ void setupApplication() {
 	shadowPassQuery.loadQuery(GL_TIME_ELAPSED);
 	fxaaPassQuery.loadQuery(GL_TIME_ELAPSED);
 
-	//Generate Cascade Levels
-	for (uint32_t i = 1; i < cascadeCount + 1; i++) { //Found this powerful algorithm at: https://github.com/1393650770/Opengl-Shadow-CSM. If you have any info on it, let me know. I am interested in how this bad boy works.
-		float k = (float)i / (float)cascadeCount;
-		shadowCascadeLevels.push_back(0.8f * (nearPlane * powf(fov, k)) + (1 - 0.8f) * (nearPlane + (farPlane - nearPlane) * k));
-	}
+	//Generate and set Cascades Far Planes
 	mainShader.use();
 	mainShader.set1i("cascadeCount", cascadeCount);
+
+	shadowCascadeLevels.clear();
+	float lambda = 0.8f;// .8f;
+	float virtualNearPlane = 1.f;// nearPlane;// 1.f;
+	for (uint32_t i = 1; i < cascadeCount; i++) {
+		float k = (float)i / (float)cascadeCount;
+		float f = lambda * (virtualNearPlane * powf(farPlane / virtualNearPlane, k)) + (1.f - lambda) * (virtualNearPlane + (farPlane - virtualNearPlane) * k);
+		shadowCascadeLevels.push_back(f);
+	}
+	shadowCascadeLevels.push_back(farPlane);
+
 	for (uint32_t i = 0; i < cascadeCount; i++) {
 		mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
 	}
+
 	setupScreenRelated();
 	initImGui();
 	setupUBOs();
@@ -615,7 +623,7 @@ void setupScreenRelated() {
 	postprocFB.create2D(GL_TEXTURE_2D, scrWidth, scrHeight, GL_RGBA16F);
 	fxaaFB.create2D(GL_TEXTURE_2D, scrWidth, scrHeight, GL_RGBA, GL_RGBA, NULL);
 
-	shadowFB.createLayered2D(GL_TEXTURE_2D_ARRAY, shadowResolution, shadowResolution, cascadeCount + 1, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, NULL, GL_DEPTH_ATTACHMENT, GL_FLOAT);
+	shadowFB.createLayered2D(GL_TEXTURE_2D_ARRAY, shadowResolution, shadowResolution, cascadeCount, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, NULL, GL_DEPTH_ATTACHMENT, GL_FLOAT);
 	shadowFB.texture.setBorderColor({ 1.f, 1.f, 1.f, 1.f });
 	shadowFB.texture.setFilterMin(GL_NEAREST);
 	shadowFB.texture.setFilterMag(GL_NEAREST);
@@ -1000,15 +1008,12 @@ glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane) {
 }
 std::vector<glm::mat4> getLightSpaceMatrices() {
 	std::vector<glm::mat4> ret;
-	for (uint32_t i = 0; i < cascadeCount + 1; i++) {
+	for (uint32_t i = 0; i < cascadeCount; i++) {
 		if (i == 0) {
 			ret.push_back(getLightSpaceMatrix(nearPlane, shadowCascadeLevels[i]));
 		}
-		else if (i < cascadeCount) {
-			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
-		}
 		else {
-			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], farPlane));
+			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
 		}
 	}
 	return ret;

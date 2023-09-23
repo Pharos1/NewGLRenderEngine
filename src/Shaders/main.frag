@@ -263,13 +263,10 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 		
 	int layer = -1;
 	for (int i = 0; i < cascadeCount; i++) {
-		if (depthValue < cascadePlaneDistances[i]) {
+		if (depthValue <= cascadePlaneDistances[i]) {
 			layer = i;
 			break;
 		}
-	}
-	if (layer == -1) {
-		layer = cascadeCount;
 	}
 	
 	vec4 fragPosLightSpace = lightSpaceMatrices[layer] * vec4(worldPos, 1.f);
@@ -285,12 +282,8 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 	float minBias = .005f;
 	float bias = max(maxBias * (1.f - dot(normal, lightDir)), minBias);
 	const float biasModifier = 6.f;//0.5f;
-	if (layer == cascadeCount) {
-		bias *= 1 / (farPlane * biasModifier);
-	}
-	else {
-		bias *= 1 / (cascadePlaneDistances[layer] * biasModifier);
-	}
+
+	bias *= 1.f / (cascadePlaneDistances[layer] * biasModifier);
 
 	//PCF
 	float shadow = 0.f;
