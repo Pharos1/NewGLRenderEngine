@@ -193,6 +193,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 	float NdotL = max(dot(normal, lightDir), 0.f);
 
 	vec3 magicAmbient = albedo * .15f;
+	return (kD * albedo / PI + specular) * radiance * NdotL * (1.f-calcShadow(normal, lightDir)) + magicAmbient;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
 	if (light.color == vec3(0.f) || !light.enabled) return vec3(0.f);
