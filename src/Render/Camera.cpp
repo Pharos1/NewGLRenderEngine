@@ -48,8 +48,9 @@ void Camera::processMouse(double xPos, double yPos) {
 	pitch += yOffset;
 
 	if (pitch >= 90.f) pitch = 89.9f;
-	if (pitch <= -90.f) pitch = -89.9f;
-
+	else if (pitch <= -90.f) pitch = -89.9f;
+	if (yaw >= 360.f) yaw -= 360.f;
+	else if (yaw <= -360.f) yaw += 360.f;
 
 	calcFrontVec();
 	updateView();
