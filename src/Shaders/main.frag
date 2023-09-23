@@ -294,8 +294,8 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 	//PCF
 	float shadow = 0.f;
 	vec2 texelSize = 1.f / vec2(textureSize(shadowMap, 0));
-	for(int x = -1; x <= 1; ++x) {
-		for(int y = -1; y <= 1; ++y) {
+	for(int x = -1; x <= 1; x++) {
+		for(int y = -1; y <= 1; y++) {
 			float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, layer)).r; 
 			shadow += (projCoords.z - bias) > pcfDepth ? 1.f : 0.f;
 		}
