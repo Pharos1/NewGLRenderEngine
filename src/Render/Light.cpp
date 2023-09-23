@@ -11,7 +11,7 @@ static float calcLightRadius(const glm::vec3 color) {
 
 //DirLight
 DirLight::DirLight(glm::vec3 dir, glm::vec3 color, bool enabled)
-	: dir(dir), color(color), enabled(enabled) {
+	: dir(glm::normalize(dir)), color(color), enabled(enabled) {
 }
 
 void DirLight::set(const std::string& objectName, const Shader& shaderProgram) {
@@ -25,7 +25,7 @@ void DirLight::set(const std::string& objectName, const Shader& shaderProgram) {
 	changed = false;
 }
 void DirLight::setDir(glm::vec3 value) {
-	dir = value;
+	dir = glm::normalize(value);
 	changed = true;
 }
 void DirLight::setColor(glm::vec3 value) {
@@ -67,7 +67,7 @@ glm::vec3 PointLight::getColor() const { return color; }
 
 //SpotLight
 SpotLight::SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 color, float cutOff, float outerCutOff, bool enabled)
-	: pos(pos), dir(dir), color(color), cutOff(cutOff), outerCutOff(outerCutOff), enabled(enabled) {
+	: pos(pos), dir(glm::normalize(dir)), color(color), cutOff(cutOff), outerCutOff(outerCutOff), enabled(enabled) {
 }
 
 void SpotLight::set(const std::string& objectName, const Shader& shaderProgram) {
@@ -85,7 +85,7 @@ void SpotLight::set(const std::string& objectName, const Shader& shaderProgram) 
 	changed = false;
 }
 void SpotLight::setDir(glm::vec3 value) {
-	dir = value;
+	dir = glm::normalize(value);
 	changed = true;
 }
 void SpotLight::setPos(glm::vec3 value) {
