@@ -52,6 +52,7 @@ layout(binding = 4) uniform sampler2DArray shadowMap;
 uniform int cascadeCount;
 uniform float farPlane;
 uniform float cascadePlaneDistances[16];
+uniform bool cascadeDebugView;
 
 //layout(binding = 0) uniform sampler2D gPositionBuffer;
 //layout(binding = 1) uniform sampler2D gNormalBuffer;
@@ -97,6 +98,23 @@ void main(){
 	vec3 fragNormal = gNormal.rgb;
 	vec3 worldPos = gPosition.rgb;
 	*/
+
+	if (cascadeDebugView) {
+		vec4 fragPosViewSpace = view * vec4(worldPos, 1.f); //Make this just calculate the depth, not the position
+		float depthValue = abs(fragPosViewSpace.z);
+
+		int layer = -1;
+		for (int i = 0; i < cascadeCount; i++) {
+			if (depthValue <= cascadePlaneDistances[i]) {
+				layer = i;
+				break;
+			}
+		}
+		if (layer == 0) sampledAlbedo = vec3(1.f, 0.f, 0.f);
+		else if (layer == 1) sampledAlbedo = vec3(0.f, 1.f, 0.f);
+		else if (layer == 2) sampledAlbedo = vec3(0.f, 0.f, 1.f);
+		else sampledAlbedo = vec3(0.f, 1.f, 1.f);
+	}
 
 	vec3 viewDir = normalize(viewPos - worldPos);
 	
@@ -290,7 +308,7 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 	vec2 texelSize = 1.f / vec2(textureSize(shadowMap, 0));
 	for(int x = -1; x <= 1; x++) {
 		for(int y = -1; y <= 1; y++) {
-			float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, layer)).r; 
+			float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, layer)).r;
 			shadow += (projCoords.z - bias) > pcfDepth ? 1.f : 0.f;
 		}
 	}
