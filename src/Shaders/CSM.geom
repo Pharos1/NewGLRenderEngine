@@ -3,7 +3,7 @@ layout(triangles, invocations = 4) in;
 layout(triangle_strip, max_vertices = 3) out;
 
 layout(std140, binding = 1) uniform LightSpaceMatrices {
-	mat4 lightSpaceMatrices[16];
+	mat4 lightSpaceMatrices[16]; //16 will be the maximum number of cascades
 };
 
 void main() {
