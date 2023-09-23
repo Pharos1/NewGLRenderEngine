@@ -172,7 +172,7 @@ void Texture::setFilterMin(GLenum filter) {
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMin);
 }
 void Texture::setFilterMag(GLenum filter) {
-	this->filterMin = filter;
+	this->filterMag = filter;
 
 	if (empty()) return;
 	bind();
