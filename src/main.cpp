@@ -225,8 +225,10 @@ GLuint lightMatricesUBO;
 
 //CSM
 float cascadeCount = 3;
-std::vector<float> shadowCascadeLevels;// { farPlane / 50.0f, farPlane / 25.0f, farPlane / 10.0f, farPlane / 2.0f };
+bool csmEnabled = true;
 GLuint shadowResolution = 2048;
+bool cascadeDebugView = false;
+bool freezeCSM = false;
 
 int main() {
 	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
@@ -286,14 +288,17 @@ int main() {
 		mainShader.use();
 		mainShader.setVec3("viewPos", cam.pos);
 
+		if (!freezeCSM) {
 		const auto lightMatrices = getLightSpaceMatrices();
 		glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
 		for (size_t i = 0; i < lightMatrices.size(); i++) {
-			glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4x4), sizeof(glm::mat4x4), &lightMatrices[i]);
+				glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), sizeof(glm::mat4), &lightMatrices[i]);
 		}
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		}
 		
 		shadowPassQuery.begin();
+		if (csmEnabled) {
 		glDepthFunc(GL_LESS);
 		glViewport(0, 0, shadowResolution, shadowResolution);
 		shadowFB.bind();
@@ -305,6 +310,7 @@ int main() {
 		glCullFace(GL_BACK);
 		shadowFB.unbind();
 		glViewport(0, 0, scrWidth, scrHeight);
+		}
 		shadowPassQuery.end();
 		
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
@@ -545,7 +551,7 @@ void setupApplication() {
 	//Uniforms and stuff
 	mainShader.use();
 	mainShader.set1f("specularExponent", 32.f);
-	mainShader.set1f("farPlane", farPlane);
+	mainShader.set1f("farPlane", cam.farPlane);
 
 	dirLight.set("dirLight", mainShader);
 	pointLight.set("pointLight", mainShader);
@@ -579,6 +585,7 @@ void setupApplication() {
 
 	//Generate and set Cascades Far Planes
 	mainShader.use();
+	mainShader.set1b("csmEnabled", csmEnabled);
 	mainShader.set1i("cascadeCount", cascadeCount);
 
 	shadowCascadeLevels.clear();
@@ -821,7 +828,8 @@ void updateGUI() {
 			mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 
 			mainShader.use();
-			mainShader.set1f("farPlane", farPlane);
+			mainShader.set1f("farPlane", cam.farPlane);
+			mainShader.set1b("csmEnabled", csmEnabled);
 			mainShader.set1i("cascadeCount", cascadeCount);
 			for (uint32_t i = 0; i < cascadeCount; i++) {
 				mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
@@ -902,6 +910,24 @@ void updateGUI() {
 		} ImGui::SameLine();
 		if (ImGui::SliderInt("##0", &msaaSamples, 1, msaaMaxSamples)) {
 			glfwWindowHint(GLFW_SAMPLES, msaaSamples);
+		}
+	}
+	if (ImGui::CollapsingHeader("Debugging", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text((std::string("Cam Pos: ") + "X: " + std::format("{:.3f}", cam.pos.x) + ", Y: " + std::format("{:.3f}", cam.pos.y) + ", Z: " + std::format("{:.3f}", cam.pos.z)).c_str());
+		ImGui::SameLine(); if (ImGui::SmallButton("Copy##0")) {
+			ImGui::SetClipboardText((std::format("{:.3f}", cam.pos.x) + ", " + std::format("{:.3f}", cam.pos.y) + ", " + std::format("{:.3f}", cam.pos.z)).c_str());
+		}
+		ImGui::Text((std::string("Cam Rot: ") + "Pitch: " + std::to_string(cam.pitch) + ", Yaw: " + std::to_string(cam.yaw)).c_str());
+
+		ImGui::NewLine();
+		if (ImGui::Checkbox("Cascade Debug View", &cascadeDebugView)) {
+			mainShader.use();
+			mainShader.set1b("cascadeDebugView", cascadeDebugView);
+		}
+		if (ImGui::Checkbox("Freeze CSM", &freezeCSM)) {
+			mainShader.use();
+			mainShader.set1b("freezeCSM", freezeCSM);
+			mainShader.setVec3("oldViewPos", cam.pos);
 		}
 	}
 

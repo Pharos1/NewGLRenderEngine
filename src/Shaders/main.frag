@@ -49,10 +49,13 @@ layout(std140, binding = 1) uniform LightSpaceMatrices {
 	mat4 lightSpaceMatrices[16];
 };
 layout(binding = 4) uniform sampler2DArray shadowMap;
+uniform bool csmEnabled;
 uniform int cascadeCount;
 uniform float farPlane;
 uniform float cascadePlaneDistances[16];
 uniform bool cascadeDebugView;
+uniform bool freezeCSM;
+uniform vec3 oldViewPos;
 
 //layout(binding = 0) uniform sampler2D gPositionBuffer;
 //layout(binding = 1) uniform sampler2D gNormalBuffer;
@@ -100,8 +103,8 @@ void main(){
 	*/
 
 	if (cascadeDebugView) {
-		vec4 fragPosViewSpace = view * vec4(worldPos, 1.f); //Make this just calculate the depth, not the position
-		float depthValue = abs(fragPosViewSpace.z);
+		float depthValue = freezeCSM ? distance(oldViewPos, worldPos) : distance(viewPos, worldPos);
+		//float depthValue = abs(dot(vec4(view[0][2], view[1][2], view[2][2], view[3][2]), vec4(worldPos, 1.f)));
 
 		int layer = -1;
 		for (int i = 0; i < cascadeCount; i++) {
@@ -275,9 +278,11 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 	return (kD * albedo / PI + specular) * radiance * NdotL * intensity;
 }
 float calcShadow(vec3 normal, vec3 lightDir) {
+	if (!csmEnabled) return 0.f;
+
 	//Select cascade layer
-	vec4 fragPosViewSpace = view * vec4(worldPos, 1.f); //Make this just calculate the depth, not the whole position
-	float depthValue = abs(fragPosViewSpace.z);
+	//vec4 thirdViewRow = vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
+	float depthValue = freezeCSM ? distance(oldViewPos, worldPos) : distance(viewPos, worldPos);//abs(dot(vec4(view[0][2], view[1][2], view[2][2], view[3][2]), vec4(worldPos, 1.f)));
 		
 	int layer = -1;
 	for (int i = 0; i < cascadeCount; i++) {
