@@ -3,6 +3,9 @@
 #include "../Utilities/Time.hpp"
 
 class Camera {
+private:
+	bool firstMouse = true;
+
 public:
 	glm::mat4 view{1};
 	float pitch = -20.f;
