@@ -46,8 +46,6 @@ std::vector<glm::mat4> getLightSpaceMatrices();
 uint32_t scrWidth = 1280;
 uint32_t scrHeight = 920;
 GLFWwindow* window;
-float nearPlane = .1f;
-float farPlane = 250.f;
 
 //Shaders
 Shader mainShader;
@@ -58,10 +56,6 @@ Shader depthPassShader;
 Shader deferredShader;
 Shader fxaaShader;
 Shader CSMShader;
-
-//Transformation
-glm::mat4 view;
-glm::mat4 proj;
 
 //Objects
 Mesh cube;
@@ -81,7 +75,6 @@ SpotLight spotLight;
 //Texture gPosition, gNormal, gAlbedo;
 
 //Camera
-float fov = 45.f;
 Camera cam({ 0.f, .15f, .35f });
 
 //Framebuffers
@@ -275,27 +268,12 @@ int main() {
 		
 		Time::updateDelta();
 		if (mouseLocked) cam.processInput(window);
-		view = cam.getView();
 
-		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-
-		if (glfwGetKey(window, GLFW_KEY_0)) tonemapMode = 0;
-		if (glfwGetKey(window, GLFW_KEY_1)) tonemapMode = 1;
-		if (glfwGetKey(window, GLFW_KEY_2)) tonemapMode = 2;
-		if (glfwGetKey(window, GLFW_KEY_3)) tonemapMode = 3;
-		if (glfwGetKey(window, GLFW_KEY_4)) tonemapMode = 4;
-		if (glfwGetKey(window, GLFW_KEY_5)) tonemapMode = 5;
-		if (glfwGetKey(window, GLFW_KEY_6)) tonemapMode = 6;
-
-		postprocShader.use();
-		postprocShader.set1i("tonemapMode", tonemapMode);
-
-		if (glfwGetKey(window, GLFW_KEY_F) && now - lastSpotTime > .2f) {
+		if (now - lastSpotTime > .2f) {
+			if (glfwGetKey(window, GLFW_KEY_F)) {
 			spotLight.enabled = !spotLight.enabled;
 			lastSpotTime = now;
+		}
 		}
 
 		spotLight.setPos(cam.pos);
@@ -328,6 +306,10 @@ int main() {
 		shadowFB.unbind();
 		glViewport(0, 0, scrWidth, scrHeight);
 		shadowPassQuery.end();
+		
+		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam.view));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		
 		//Framebuffer::clear();
 		//renderQuadShader.use();
@@ -415,7 +397,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	scrHeight = std::max(height, 1);
 	glViewport(0, 0, scrWidth, scrHeight);
 
-	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
+	cam.updateProj((float)scrWidth / scrHeight);//proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
 
 	fxaaShader.use();
 	fxaaShader.setVec2("inverseScreenSize", glm::vec2(1.f / scrWidth, 1.f / scrHeight));
@@ -536,8 +518,7 @@ void setupApplication() {
 	CSMShader.loadShader("src/Shaders/CSM.vert", "src/Shaders/empty.frag", "src/Shaders/CSM.geom");
 
 	//Transformation
-	view = glm::mat4(1.f);
-	proj = glm::perspective(glm::radians(fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
+	cam.updateProj((float)scrWidth / scrHeight);
 
 	//Objects
 	cube.create(cubeVerts);
@@ -659,7 +640,7 @@ void setupUBOs() {
 	}
 
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(proj));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cam.proj));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	if (!lightMatricesUBO) {
@@ -954,14 +935,9 @@ std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const 
 	return frustumCorners;
 }
 glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane) {
-	const auto proj = glm::perspective(
-		glm::radians(fov),
-		(float)scrWidth / (float)scrHeight,
-		nearPlane,
-		farPlane
-	);
+	const auto proj = glm::perspective(glm::radians(cam.fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
 
-	auto corners = getFrustumCornersWorldSpace(proj, view);
+	auto corners = getFrustumCornersWorldSpace(proj, cam.view);
 	glm::vec3 center = glm::vec3(0, 0, 0);
 	for (const auto& v : corners) {
 		center += glm::vec3(v);
@@ -1010,7 +986,7 @@ std::vector<glm::mat4> getLightSpaceMatrices() {
 	std::vector<glm::mat4> ret;
 	for (uint32_t i = 0; i < cascadeCount; i++) {
 		if (i == 0) {
-			ret.push_back(getLightSpaceMatrix(nearPlane, shadowCascadeLevels[i]));
+			ret.push_back(getLightSpaceMatrix(cam.nearPlane, shadowCascadeLevels[i]));
 		}
 		else {
 			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));

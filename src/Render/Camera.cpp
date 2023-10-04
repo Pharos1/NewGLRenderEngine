@@ -8,11 +8,11 @@ Camera::Camera(glm::vec3 pos, float speed, float mouseSensitivity)
 	calcFrontVec();
 }
 
-const glm::mat4& Camera::getView() const {
-	return view;
-}
 void Camera::updateView() {
 	view = glm::lookAt(pos, pos + front, up);
+}
+void Camera::updateProj(float aspectRatio) {
+	proj = glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
 }
 void Camera::processInput(GLFWwindow* window) {
 	float speedAmplifier = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) ? 3.f : (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ? .15f : 1.f);

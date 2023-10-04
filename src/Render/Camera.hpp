@@ -7,24 +7,31 @@ private:
 	bool firstMouse = true;
 
 public:
-	glm::mat4 view{1};
+	//Projection
+	float farPlane = 250.f;
+	float nearPlane = .1f;
+	float fov = 45.f;
+
+	glm::mat4 view;
+	glm::mat4 proj;
+
+	//Transformation
+	double lastX{}, lastY{};
 	float pitch = -20.f;
 	float yaw = -90.f;
-	bool firstMouse = true;
-	double lastX{}, lastY{};
-
-	//Optional
-	float speed = 75.f;
-	float mouseSensitivity = 0.1f;
 	glm::vec3 pos{};
 	glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	//Settings
+	float speed = 75.f;
+	float mouseSensitivity = 0.1f;
+
 	Camera(glm::vec3 pos, float speed = 7.5f, float mouseSensitivity = .1f);
 	Camera() = default;
 
-	const glm::mat4& getView() const;
 	void updateView();
+	void updateProj(float aspectRatio);
 	void processInput(GLFWwindow* window);
 	void processMouse(double xPos, double yPos);
 	void calcFrontVec();
