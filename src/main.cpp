@@ -185,7 +185,7 @@ float windowAlpha;
 
 //UI Options
 int currentStyle = 0; //0 - Classic, 1 - Dark, 2 - Light
-float bgAlpha = .7f;
+float bgAlpha = .8f;
 
 //Software and Hardwere Info
 std::string openGLVersion;
