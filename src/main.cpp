@@ -876,6 +876,10 @@ void updateGUI() {
 		}
 	}
 	if (ImGui::CollapsingHeader("Profiling", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text((std::string("Vertices drawn: ") + std::to_string(sceneEntity.verticesCount)).c_str());
+		ImGui::Text((std::string("Faces drawn:    ") + std::to_string(sceneEntity.verticesCount / 3)).c_str());
+
+		ImGui::NewLine();
 			ImGui::Text(("ImGui Average framerate: " + std::to_string((int)io.Framerate) + " FPS").c_str());
 			ImGui::Text(("ImGui Average frametime: " + std::to_string(1000 / io.Framerate) + " ms").c_str());
 			ImGui::Text(("Average Delta Time:      " + std::to_string(Time::avgMsTime) + " ms").c_str());

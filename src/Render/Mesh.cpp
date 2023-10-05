@@ -13,8 +13,8 @@ Mesh::Mesh(Mesh&& other) noexcept {
 	std::swap(VBO, other.VBO);
 	std::swap(VAO, other.VAO);
 	std::swap(EBO, other.EBO);
-	std::swap(verticesSize, other.verticesSize);
-	std::swap(indicesSize, other.indicesSize);
+	std::swap(verticesCount, other.verticesCount);
+	std::swap(indicesCount, other.indicesCount);
 	std::swap(material, other.material);
 }
 Mesh& Mesh::operator=(Mesh&& other) noexcept {
@@ -25,16 +25,16 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept {
 	std::swap(VBO, other.VBO);
 	std::swap(VAO, other.VAO);
 	std::swap(EBO, other.EBO);
-	std::swap(verticesSize, other.verticesSize);
-	std::swap(indicesSize, other.indicesSize);
+	std::swap(verticesCount, other.verticesCount);
+	std::swap(indicesCount, other.indicesCount);
 	std::swap(material, other.material);
 
 	return *this;
 }
 
 void Mesh::create(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
-	verticesSize = static_cast<int>(vertices.capacity());
-	indicesSize = indices.empty() ? 0 : static_cast<int>(indices.capacity());
+	verticesCount = static_cast<int>(vertices.capacity());
+	indicesCount = indices.empty() ? 0 : static_cast<int>(indices.capacity());
 
 	if(!VAO) glGenVertexArrays(1, &VAO);
 	if(!VBO) glGenBuffers(1, &VBO);
@@ -42,12 +42,12 @@ void Mesh::create(const std::vector<Vertex>& vertices, const std::vector<uint32_
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, verticesSize * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
-	if (indicesSize) {
+	if (indicesCount) {
 		if(!EBO) glGenBuffers(1, &EBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 	}
 
 	Vertex::setAttribArrays();
@@ -63,8 +63,8 @@ void Mesh::deleteMesh() {
 	VAO = 0;
 	VBO = 0;
 	EBO = 0;
-	verticesSize = 0;
-	indicesSize = 0;
+	verticesCount = 0;
+	indicesCount = 0;
 
 	material.deleteMaterial();
 }
@@ -72,11 +72,11 @@ void Mesh::draw() const {
 	material.bind();
 	glBindVertexArray(VAO);
 
-	if (indicesSize) {
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesSize), GL_UNSIGNED_INT, 0);
+	if (indicesCount) {
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indicesCount), GL_UNSIGNED_INT, 0);
 	}
 	else {
-		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(verticesSize));
+		glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(verticesCount));
 	}
 
 	glBindVertexArray(0);
