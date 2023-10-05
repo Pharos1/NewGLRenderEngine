@@ -76,9 +76,10 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 viewDir, vec3 worldPos, ve
 float calcShadow(vec3 normal, vec3 lightDir);
 
 void main(){
-	if(texture(albedoTex, texCoord).a < .05f) discard;
+	vec4 sampledAlbedo = texture(albedoTex, texCoord);
+	if (sampledAlbedo.a < .05f){ discard; return; } //Some drivers don't return on discard
 
-	vec3 sampledAlbedo = pow(texture(albedoTex, texCoord).rgb, vec3(2.2f));
+	vec3 albedo = pow(sampledAlbedo.rgb, vec3(2.2f));
 	float sampledMetallic = texture(metallicTex, texCoord).b;
 	float sampledRoughness = texture(roughnessTex, texCoord).b;
 	vec3 sampledNormal = texture(normalTex, texCoord).xyz;
