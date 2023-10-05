@@ -521,7 +521,7 @@ void setupApplication() {
 	depthPassShader.loadShader("src/Shaders/basicDraw.vert", "src/Shaders/depthPrePass.frag");
 	deferredShader.loadShader("src/Shaders/main.vert", "src/Shaders/deferred.frag");
 	fxaaShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/fxaa.frag");
-	CSMShader.loadShader("src/Shaders/CSM.vert", "src/Shaders/empty.frag", "src/Shaders/CSM.geom");
+	CSMShader.loadShader("src/Shaders/CSM.vert", "src/Shaders/CSM.frag", "src/Shaders/CSM.geom");
 
 	//Transformation
 	cam.updateProj((float)scrWidth / scrHeight);
