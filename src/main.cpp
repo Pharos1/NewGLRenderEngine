@@ -226,7 +226,11 @@ GLuint lightMatricesUBO;
 //CSM
 float cascadeCount = 3;
 bool csmEnabled = true;
-GLuint shadowResolution = 2048;
+uint8_t cascadeCount = 4;
+std::vector<float> shadowCascadeLevels; //{ farPlane / 50.0f, farPlane / 25.0f, farPlane / 10.0f, farPlane / 2.0f };
+#define DEFAULT_SHADOW_RESOLUTION 2048
+GLuint shadowResolution = DEFAULT_SHADOW_RESOLUTION;
+GLuint newShadowResolution = DEFAULT_SHADOW_RESOLUTION;
 bool cascadeDebugView = false;
 bool freezeCSM = false;
 
@@ -589,14 +593,14 @@ void setupApplication() {
 	mainShader.set1i("cascadeCount", cascadeCount);
 
 	shadowCascadeLevels.clear();
-	float lambda = 0.8f;// .8f;
+	float lambda = 0.9f;// .8f;
 	float virtualNearPlane = 1.f;// nearPlane;// 1.f;
-	for (uint32_t i = 1; i < cascadeCount; i++) {
+	for (uint32_t i = 1; i < cascadeCount; i++) { //Practical view frustum split (combination between uniform and logarithmic)
 		float k = (float)i / (float)cascadeCount;
-		float f = lambda * (virtualNearPlane * powf(farPlane / virtualNearPlane, k)) + (1.f - lambda) * (virtualNearPlane + (farPlane - virtualNearPlane) * k);
+		float f = lambda * (virtualNearPlane * powf(cam.farPlane / virtualNearPlane, k)) + (1.f - lambda) * (virtualNearPlane + (cam.farPlane - virtualNearPlane) * k);
 		shadowCascadeLevels.push_back(f);
 	}
-	shadowCascadeLevels.push_back(farPlane);
+	shadowCascadeLevels.push_back(cam.farPlane);
 
 	for (uint32_t i = 0; i < cascadeCount; i++) {
 		mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
@@ -820,6 +824,28 @@ void updateGUI() {
 
 			ImGui::EndDisabled();
 			
+			ImGui::TreePop();
+		}
+		if (ImGui::TreeNode("CSM")) {
+			if (ImGui::Checkbox("CSM Enabled", &csmEnabled)) {
+				mainShader.use();
+				mainShader.set1b("csmEnabled", csmEnabled);
+			}
+			ImGui::BeginDisabled(!csmEnabled);
+
+			if (ImGui::InputInt("Shadow Resolution", (int*)&newShadowResolution, 0)) {
+				if (newShadowResolution < 1) newShadowResolution = 1;
+				if (newShadowResolution > 16384) newShadowResolution = 16384;
+			}
+			
+			if (shadowResolution != newShadowResolution) {
+				if (ImGui::Button("Apply")) {
+					shadowResolution = newShadowResolution;
+					setupScreenRelated();
+				}
+			}
+			//ImGui::SliderInt("Cascades Count", &cascadeCount, 0, 16); //Cannot be changed as I need to change CSM.geom in order for it to work.
+			ImGui::EndDisabled();
 			ImGui::TreePop();
 		}
 	}
