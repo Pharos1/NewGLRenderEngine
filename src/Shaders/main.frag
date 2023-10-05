@@ -209,12 +209,12 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3
 
 	vec3 kS = fresnel;
 	vec3 kD = vec3(1.0) - kS;
-
+	
 	kD *= 1.0 - metallic;
 
 	float NdotL = max(dot(normal, lightDir), 0.f);
 
-	vec3 magicAmbient = albedo * .15f;
+	vec3 magicAmbient = albedo * .20f;
 	return (kD * albedo / PI + specular) * radiance * NdotL * (1.f-calcShadow(normal, lightDir)) + magicAmbient;
 }
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 worldPos, vec3 albedo, float metallic, float roughness, vec3 baseReflectivity){
@@ -284,7 +284,7 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 	//Select cascade layer
 	//vec4 thirdViewRow = vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
 	float depthValue = freezeCSM ? distance(oldViewPos, worldPos) : distance(viewPos, worldPos);//abs(dot(vec4(view[0][2], view[1][2], view[2][2], view[3][2]), vec4(worldPos, 1.f)));
-		
+
 	int layer = -1;
 	for (int i = 0; i < cascadeCount; i++) {
 		if (depthValue <= cascadePlaneDistances[i]) {
