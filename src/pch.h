@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <future>
 #include <mutex>
+#include <format>
 
 //Data structures
 #include <string>
@@ -38,6 +39,7 @@
 #include <GLM/glm.hpp>
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <GLM/gtc/quaternion.hpp>
 #include <GLM/gtx/quaternion.hpp>
 #include <GLM/ext/quaternion_common.hpp>
