@@ -530,10 +530,10 @@ void setupApplication() {
 	cube.create(cubeVerts);
 	quad.create(quadVerts);
 
-	planeEntity.model.meshes.push_back(Mesh(planeVerts));
-	planeEntity.model.meshes[0].material.addTexture("Textures/Props/Checkerboard.jpg", 0);
-	sponzaEntity.model.loadModel("Models/Sponza/sponza.glTF");
-	humanEntity.model.loadModel("Models/Human/scene.gltf"); nLog("Human Model's Normal Textures are broken. See the textures bro", Log::LogInfo, "MAIN");
+	planeEntity.meshes.push_back(Mesh(planeVerts)); planeEntity.updateVertCount();
+	planeEntity.meshes[0].material.addTexture("Textures/Props/Checkerboard.jpg", 0);
+	sponzaEntity.loadModel("Models/Sponza/sponza.glTF");
+	//humanEntity.loadModel("Models/Characters/heita/heita.obj");
 
 	sceneEntity.addChild(sponzaEntity);
 	sceneEntity.addChild(humanEntity);

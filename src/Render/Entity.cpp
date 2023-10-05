@@ -64,9 +64,13 @@ void Entity::draw(const Shader& shader) {
 	shader.use();
 	shader.setMat4("model", transform.getGlobalModelMat());
 
-	model.draw();
+	Model::draw();
 
 	for (auto& child : children) {
 		child->draw(shader);
 	}
+}
+void Entity::loadModel(const std::string& path) {
+	Model::loadModel(path);
+	updateVertCount();
 }

@@ -29,9 +29,8 @@ public:
 	bool isChanged() const;
 };
 
-class Entity {
+class Entity : public Model {
 public:
-	Model model;
 	Transform transform;
 	std::vector<Entity*> children; //Note: could also make the entity own the vectors on the stack.
 	Entity* parent = nullptr;
@@ -42,4 +41,5 @@ public:
 	void updateSelf();
 	void updateSelfAndChild();
 	void draw(const Shader& shader);
+	void loadModel(const std::string& path);
 };
