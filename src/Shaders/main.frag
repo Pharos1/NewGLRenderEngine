@@ -114,24 +114,24 @@ void main(){
 				break;
 			}
 		}
-		if (layer == 0) sampledAlbedo = vec3(1.f, 0.f, 0.f);
-		else if (layer == 1) sampledAlbedo = vec3(0.f, 1.f, 0.f);
-		else if (layer == 2) sampledAlbedo = vec3(0.f, 0.f, 1.f);
-		else sampledAlbedo = vec3(0.f, 1.f, 1.f);
+		if (layer == 0) albedo = vec3(1.f, 0.f, 0.f);
+		else if (layer == 1) albedo = vec3(0.f, 1.f, 0.f);
+		else if (layer == 2) albedo = vec3(0.f, 0.f, 1.f);
+		else albedo = vec3(1.f, 1.f, 0.f);
 	}
 
 	vec3 viewDir = normalize(viewPos - worldPos);
 	
 	vec3 baseReflectivity = vec3(.04f);
-	baseReflectivity = mix(baseReflectivity, sampledAlbedo, sampledMetallic);
+	baseReflectivity = mix(baseReflectivity, albedo, sampledMetallic);
 
 	vec3 result = vec3(0.f);
-	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
-	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
-	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, sampledAlbedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
 
 	float ambientCoeficient = .03f;
-	result += ambientCoeficient * sampledAlbedo;
+	result += ambientCoeficient * albedo;
 
 	fragOut = vec4(result, 1.f);
 }
