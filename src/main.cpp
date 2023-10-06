@@ -33,9 +33,6 @@ void initImGui();
 void setupUBOs();
 void cleanup();
 
-//Every frame
-void draw(const Shader& shader);
-
 //CSM
 std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view);
 glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane);
@@ -214,7 +211,6 @@ GLuint uboMatrices;
 GLuint lightMatricesUBO;
 
 //CSM
-float cascadeCount = 3;
 bool csmEnabled = true;
 uint8_t cascadeCount = 4;
 std::vector<float> shadowCascadeLevels; //{ farPlane / 50.0f, farPlane / 25.0f, farPlane / 10.0f, farPlane / 2.0f };
@@ -291,6 +287,8 @@ int main() {
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		}
 		
+		//Draw
+		//CSM Pass
 		shadowPassQuery.begin();
 		if (csmEnabled) {
 		glDepthFunc(GL_LESS);
@@ -311,14 +309,57 @@ int main() {
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam.view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		
-		//Framebuffer::clear();
-		//renderQuadShader.use();
-		//glDepthFunc(GL_LEQUAL);
-		//shadowFB.texture.bind(0);
-		//quad.draw();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glDepthFunc(GL_LEQUAL);
 
-		draw(mainShader);
+		//Render Pass
+		postprocFB.bind();
+		postprocFB.clear();
 
+		depthPassQuery.begin();
+		sceneEntity.draw(depthPassShader);
+		depthPassQuery.end();
+
+		renderPassQuery.begin();
+		shadowFB.texture.bind(4);
+		sceneEntity.draw(mainShader);
+
+		//Light cube pass
+		lightBoxShader.use();
+		lightBoxShader.setVec3("lightColor", pointLight.getColor());
+		lightBoxShader.setVec3("lightPos", pointLight.getPos());
+		cube.draw();
+
+		renderPassQuery.end();
+
+		//Post-processing pass
+		postprocFB.unbind();
+		fxaaFB.bind();
+		postprocQuery.begin();
+		postprocShader.use();
+		postprocFB.texture.bind(0);
+		glDepthFunc(GL_LEQUAL);
+		quad.draw();
+		glDepthFunc(GL_LESS);
+		postprocFB.texture.unbind();
+		postprocQuery.end();
+		fxaaFB.unbind();
+
+		//FXAA Pass
+		fxaaPassQuery.begin();
+		fxaaShader.use();
+		fxaaFB.texture.bind(0);
+		glDepthFunc(GL_LEQUAL);
+		quad.draw();
+		glDepthFunc(GL_LESS);
+		fxaaPassQuery.end();
+
+		//GUI Pass
+		guiPassQuery.begin();
+		GUI::updateGUI();
+		guiPassQuery.end();
+
+		//Display Frame
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
@@ -657,59 +698,6 @@ void setupUBOs() {
 void cleanup() {
 	GUI::cleanup();
 	glfwTerminate();
-}
-
-//Every frame
-void draw(const Shader& shader) {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	glDepthFunc(GL_LEQUAL);
-
-	//Draw
-	postprocFB.bind();
-	postprocFB.clear();
-
-	depthPassQuery.begin();
-	sceneEntity.draw(depthPassShader);
-	depthPassQuery.end();
-
-	renderPassQuery.begin();
-	shadowFB.texture.bind(4);
-	sceneEntity.draw(shader);
-
-	//Light cube pass
-	lightBoxShader.use();
-	lightBoxShader.setVec3("lightColor", pointLight.getColor());
-	lightBoxShader.setVec3("lightPos", pointLight.getPos());
-	cube.draw();
-
-	renderPassQuery.end();
-
-	//Post-processing pass
-	postprocFB.unbind();
-	fxaaFB.bind();
-
-	postprocQuery.begin();
-	postprocShader.use();
-	postprocFB.texture.bind(0);
-	glDepthFunc(GL_LEQUAL);
-	quad.draw();
-	glDepthFunc(GL_LESS);
-	postprocFB.texture.unbind();
-	postprocQuery.end();
-
-	fxaaFB.unbind();
-
-	fxaaPassQuery.begin();
-	fxaaShader.use();
-	fxaaFB.texture.bind(0);
-	glDepthFunc(GL_LEQUAL);
-	quad.draw();
-	glDepthFunc(GL_LESS);
-	fxaaPassQuery.end();
-
-	guiPassQuery.begin();
-	GUI::updateGUI();
-	guiPassQuery.end();
 }
 
 //CSM
