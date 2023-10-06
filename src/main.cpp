@@ -79,33 +79,6 @@ Framebuffer fxaaFB;
 Framebuffer shadowFB;
 
 //Object Data
-/*
-std::vector<Vertex> vertices = {
-	{{-1.f, 1.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 1.f}},
-	{{ 1.f, 1.f, 1.f}, {0.f, 0.f, 1.f}, {1.f, 1.f}},
-	{{ 1.f,-1.f, 1.f}, {0.f, 0.f, 1.f}, {1.f, 0.f}},
-	{{-1.f,-1.f, 1.f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
-
-	{{-1.f, 1.f,-1.f}, {0.f, 0.f,-1.f}, {0.f, 1.f}},
-	{{ 1.f, 1.f,-1.f}, {0.f, 0.f,-1.f}, {1.f, 1.f}},
-	{{ 1.f,-1.f,-1.f}, {0.f, 0.f,-1.f}, {1.f, 0.f}},
-	{{-1.f,-1.f,-1.f}, {0.f, 0.f,-1.f}, {0.f, 0.f}},
-};
-std::vector<uint32_t> indices = {
-	0, 1, 2, //Front
-	0, 3, 2,
-	4, 5, 6, //Back
-	4, 7, 6,
-	0, 3, 7, //Left
-	4, 7, 3,
-	1, 5, 6, //Right
-	1, 2, 6,
-	4, 5, 1, //Up
-	4, 0, 1,
-	6, 7, 3, //Down
-	6, 2, 3,
-};
-*/
 std::vector<Vertex> cubeVerts = {
 	{{-1.f,-1.f, 1.f}, { 0.f, 0.f, 1.f}, {0.f, 0.f}}, //Front
 	{{ 1.f,-1.f, 1.f}, { 0.f, 0.f, 1.f}, {1.f, 0.f}},
