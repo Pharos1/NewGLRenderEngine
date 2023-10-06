@@ -334,6 +334,7 @@
   <ItemGroup>
     <None Include="src\Shaders\basicDraw.vert" />
     <None Include="src\Shaders\basicQuad.vert" />
+    <None Include="src\Shaders\CSM.frag" />
     <None Include="src\Shaders\empty.frag" />
     <None Include="src\Shaders\CSM.geom" />
     <None Include="src\Shaders\CSM.vert" />

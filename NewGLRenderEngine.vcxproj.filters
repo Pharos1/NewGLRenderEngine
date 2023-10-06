@@ -185,5 +185,6 @@
     <None Include="src\Shaders\empty.frag" />
     <None Include="src\Shaders\CSM.geom" />
     <None Include="src\Shaders\CSM.vert" />
+    <None Include="src\Shaders\CSM.frag" />
   </ItemGroup>
 </Project>
