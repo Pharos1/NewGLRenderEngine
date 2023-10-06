@@ -1,6 +1,6 @@
 #pragma once
 #include "../pch.h"
-#include "Texture.hpp"
+#include "../GL/Texture.hpp"
 
 class Material {
 public:

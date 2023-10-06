@@ -2,10 +2,10 @@
 #include "../pch.h"
 
 #include "Mesh.hpp"
-#include "../Render/Shader.hpp"
-#include "Texture.hpp"
+#include "../GL/Shader.hpp"
+#include "../GL/Texture.hpp"
 #include "Vertex.hpp"
-#include "Material.hpp"
+#include "../Render/Material.hpp"
 
 class Model {
 public:

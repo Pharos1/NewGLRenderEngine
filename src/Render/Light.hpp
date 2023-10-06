@@ -1,6 +1,6 @@
 #pragma once
 #include "../pch.h"
-#include "Shader.hpp"
+#include "../GL/Shader.hpp"
 
 class DirLight {
 private:

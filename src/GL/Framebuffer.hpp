@@ -1,7 +1,7 @@
 #pragma once
 #include "../pch.h"
 #include "../Utilities/Logger.hpp"
-#include "../Render/Texture.hpp"
+#include "../GL/Texture.hpp"
 
 class Framebuffer {
 private:

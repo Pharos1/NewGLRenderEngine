@@ -48,6 +48,6 @@
 #include <ASSIMP/Importer.hpp>
 #include <ASSIMP/scene.h>
 #include <ASSIMP/postprocess.h>
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
+#include "../Dependencies/include/imgui/imgui.h"
+#include "../Dependencies/include/imgui/imgui_impl_glfw.h"
+#include "../Dependencies/include/imgui/imgui_impl_opengl3.h"

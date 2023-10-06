@@ -1,17 +1,32 @@
 #include "pch.h"
 
-#include "Render/Vertex.hpp"
-#include "Render/Mesh.hpp"
-#include "Render/Texture.hpp"
-#include "Render/Model.hpp"
-#include "Render/Shader.hpp"
+#include "GL/Texture.hpp"
+#include "GL/Shader.hpp"
+#include "Object/Vertex.hpp"
+#include "Object/Mesh.hpp"
+#include "Object/Model.hpp"
+#include "Object/Entity.hpp"
 #include "Render/Camera.hpp"
 #include "Render/Light.hpp"
-#include "Render/Framebuffer.hpp"
-#include "Render/Entity.hpp"
+#include "GL/Framebuffer.hpp"
 #include "Utilities/Logger.hpp"
 #include "Utilities/Time.hpp"
 #include "Utilities/Query.hpp"
+
+namespace GUI {
+	//GUI
+	ImGuiIO io;
+	ImGuiStyle* style;
+	float windowAlpha;
+
+	//UI Options
+	int currentStyle = 0; //0 - Classic, 1 - Dark, 2 - Light
+	float bgAlpha = .8f;
+	float offAlpha = .3f;
+
+	void updateGUI();
+	void cleanup();
+}
 
 #define glCheckError() glCheckError_(__FILE__, __LINE__)
 
@@ -236,9 +251,9 @@ int main() {
 
 		if (now - lastSpotTime > .2f) {
 			if (glfwGetKey(window, GLFW_KEY_F)) {
-			spotLight.enabled = !spotLight.enabled;
-			lastSpotTime = now;
-		}
+				spotLight.enabled = !spotLight.enabled;
+				lastSpotTime = now;
+			}
 		}
 
 		spotLight.setPos(cam.pos);
@@ -252,32 +267,32 @@ int main() {
 		mainShader.setVec3("viewPos", cam.pos);
 
 		if (!freezeCSM) {
-		const auto lightMatrices = getLightSpaceMatrices();
-		glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
-		for (size_t i = 0; i < lightMatrices.size(); i++) {
+			const auto lightMatrices = getLightSpaceMatrices();
+			glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
+			for (size_t i = 0; i < lightMatrices.size(); i++) {
 				glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), sizeof(glm::mat4), &lightMatrices[i]);
+			}
+			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		}
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-		}
-		
+
 		//Draw
 		//CSM Pass
 		shadowPassQuery.begin();
 		if (csmEnabled) {
-		glDepthFunc(GL_LESS);
-		glViewport(0, 0, shadowResolution, shadowResolution);
-		shadowFB.bind();
-		shadowFB.clear();
-		glCullFace(GL_FRONT);
-		glEnable(GL_DEPTH_CLAMP); //From a comment by https://disqus.com/by/disqus_XCUOEk9iLH/? on disqus.
-		sceneEntity.draw(CSMShader);
-		glDisable(GL_DEPTH_CLAMP);
-		glCullFace(GL_BACK);
-		shadowFB.unbind();
-		glViewport(0, 0, scrWidth, scrHeight);
+			glDepthFunc(GL_LESS);
+			glViewport(0, 0, shadowResolution, shadowResolution);
+			shadowFB.bind();
+			shadowFB.clear();
+			glCullFace(GL_FRONT);
+			glEnable(GL_DEPTH_CLAMP); //From a comment by https://disqus.com/by/disqus_XCUOEk9iLH/? on disqus.
+			sceneEntity.draw(CSMShader);
+			glDisable(GL_DEPTH_CLAMP);
+			glCullFace(GL_BACK);
+			shadowFB.unbind();
+			glViewport(0, 0, scrWidth, scrHeight);
 		}
 		shadowPassQuery.end();
-		
+
 		glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam.view));
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -756,198 +771,188 @@ std::vector<glm::mat4> getLightSpaceMatrices() {
 }
 
 namespace GUI {
-	//GUI
-	ImGuiIO io;
-	ImGuiStyle* style;
-	float windowAlpha;
-	
-	//UI Options
-	int currentStyle = 0; //0 - Classic, 1 - Dark, 2 - Light
-	float bgAlpha = .8f;
-	float offAlpha = .3f;
+	void updateGUI() {
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
-void updateGUI() {
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+		io = ImGui::GetIO();
 
-	io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
 
-	ImGuiStyle& style = ImGui::GetStyle();
+		ImGui::SetNextWindowSizeConstraints(ImVec2(200, scrHeight), ImVec2(scrWidth, scrHeight));
+		ImGui::SetNextWindowBgAlpha(bgAlpha);
 
-	ImGui::SetNextWindowSizeConstraints(ImVec2(200, scrHeight), ImVec2(scrWidth, scrHeight));
-	ImGui::SetNextWindowBgAlpha(bgAlpha);
+		ImGui::Begin("Option Window", NULL, ImGuiWindowFlags_NoMove);
+		ImGui::SetWindowPos(ImVec2(scrWidth - ImGui::GetWindowWidth(), 0));
 
-	ImGui::Begin("Option Window", NULL, ImGuiWindowFlags_NoMove);
-	ImGui::SetWindowPos(ImVec2(scrWidth - ImGui::GetWindowWidth(), 0));
+		if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
+			if (ImGui::TreeNode("Post-processing")) {
+				ImGui::Text("Anti-Aliasing");
+				if (ImGui::Checkbox("FXAA", &fxaaEnabled)) {
+					fxaaShader.use();
+					fxaaShader.set1b("fxaaEnabled", fxaaEnabled);
+				}
 
-	if (ImGui::CollapsingHeader("Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
-		if (ImGui::TreeNode("Post-processing")) {
-			ImGui::Text("Anti-Aliasing");
-			if (ImGui::Checkbox("FXAA", &fxaaEnabled)) {
-				fxaaShader.use();
-				fxaaShader.set1b("fxaaEnabled", fxaaEnabled);
-			}
+				ImGui::NewLine();
 
-			ImGui::NewLine();
-
-			ImGui::Text("FXAA Options");
-			ImGui::BeginDisabled(!fxaaEnabled);
-			if (ImGui::SliderFloat("FXAA_EDGE_THRESHOLD_MIN", &EDGE_THRESHOLD_MIN, 0, 1, "%.4f")) {
-				fxaaShader.use();
-				fxaaShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
-				fxaaRevert = true;
-			}
-			if (ImGui::SliderFloat("FXAA_EDGE_THRESHOLD_MAX", &EDGE_THRESHOLD_MAX, 0, 1, "%.4f")) {
-				fxaaShader.use();
-				fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
-				fxaaRevert = true;
-			}
-			if (ImGui::SliderInt("FXAA_ITERATIONS", &ITERATIONS, 0, 12)) {
-				fxaaShader.use();
-				fxaaShader.set1i("ITERATIONS", ITERATIONS);
-				fxaaRevert = true;
-			}
-			if (ImGui::SliderFloat("FXAA_SUBPIXEL_QUALITY", &SUBPIXEL_QUALITY, 0, 1, "%.4f")) {
-				fxaaShader.use();
-				fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
-				fxaaRevert = true;
-			}
-			if (fxaaRevert) {
-				if (ImGui::Button("Revert")) {
-					EDGE_THRESHOLD_MIN = DEFAULT_EDGE_THRESHOLD_MIN;
-					EDGE_THRESHOLD_MAX = DEFAULT_EDGE_THRESHOLD_MAX;
-					ITERATIONS = DEFAULT_ITERATIONS;
-					SUBPIXEL_QUALITY = DEFAULT_SUBPIXEL_QUALITY;
-
+				ImGui::Text("FXAA Options");
+				ImGui::BeginDisabled(!fxaaEnabled);
+				if (ImGui::SliderFloat("FXAA_EDGE_THRESHOLD_MIN", &EDGE_THRESHOLD_MIN, 0, 1, "%.4f")) {
 					fxaaShader.use();
 					fxaaShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
-					fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
-					fxaaShader.set1i("ITERATIONS", ITERATIONS);
-					fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
-
-					fxaaRevert = false;
+					fxaaRevert = true;
 				}
+				if (ImGui::SliderFloat("FXAA_EDGE_THRESHOLD_MAX", &EDGE_THRESHOLD_MAX, 0, 1, "%.4f")) {
+					fxaaShader.use();
+					fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
+					fxaaRevert = true;
+				}
+				if (ImGui::SliderInt("FXAA_ITERATIONS", &ITERATIONS, 0, 12)) {
+					fxaaShader.use();
+					fxaaShader.set1i("ITERATIONS", ITERATIONS);
+					fxaaRevert = true;
+				}
+				if (ImGui::SliderFloat("FXAA_SUBPIXEL_QUALITY", &SUBPIXEL_QUALITY, 0, 1, "%.4f")) {
+					fxaaShader.use();
+					fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
+					fxaaRevert = true;
+				}
+				if (fxaaRevert) {
+					if (ImGui::Button("Revert")) {
+						EDGE_THRESHOLD_MIN = DEFAULT_EDGE_THRESHOLD_MIN;
+						EDGE_THRESHOLD_MAX = DEFAULT_EDGE_THRESHOLD_MAX;
+						ITERATIONS = DEFAULT_ITERATIONS;
+						SUBPIXEL_QUALITY = DEFAULT_SUBPIXEL_QUALITY;
+
+						fxaaShader.use();
+						fxaaShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
+						fxaaShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
+						fxaaShader.set1i("ITERATIONS", ITERATIONS);
+						fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
+
+						fxaaRevert = false;
+					}
+				}
+				ImGui::EndDisabled();
+
+				ImGui::NewLine();
+
+				ImGui::Text("Tonemapping");
+				std::vector<const char*> tonemapModes = { "None", "Reinhard", "Extended Reinhard", "Uncharted2", "Hill ACES", "Narkowicz ACES", "Manual Exposure" };
+
+				if (ImGui::Combo("Tonemap Mode", &tonemapMode, tonemapModes.data(), tonemapModes.size())) {
+					postprocShader.use();
+					postprocShader.set1i("tonemapMode", tonemapMode);
+				}
+				ImGui::NewLine();
+
+				if (ImGui::SliderFloat("Maximum Radiance", &maxRadiance, 0, 10)) {
+					postprocShader.use();
+					postprocShader.set1f("maxRadiance", maxRadiance);
+				}
+				if (ImGui::SliderFloat("Manual Exposure", &exposure, 0, 10)) {
+					postprocShader.use();
+					postprocShader.set1f("exposure", exposure);
+				}
+
+
+				ImGui::Text("Gamma Correction");
+				if (ImGui::Checkbox("Use Gamma Correction", &gammaOn)) {
+					postprocShader.use();
+					postprocShader.set1b("gammaOn", gammaOn);
+				}
+
+				ImGui::BeginDisabled(!gammaOn);
+				if (ImGui::SliderFloat("Gamma", &gamma, 0.f, 10.f)) {
+					postprocShader.use();
+					postprocShader.set1f("gamma", gamma);
+				}
+
+				ImGui::EndDisabled();
+
+				ImGui::TreePop();
 			}
-			ImGui::EndDisabled();
+			if (ImGui::TreeNode("CSM")) {
+				if (ImGui::Checkbox("CSM Enabled", &csmEnabled)) {
+					mainShader.use();
+					mainShader.set1b("csmEnabled", csmEnabled);
+				}
+				ImGui::BeginDisabled(!csmEnabled);
 
-			ImGui::NewLine();
+				if (ImGui::InputInt("Shadow Resolution", (int*)&newShadowResolution, 0)) {
+					if (newShadowResolution < 1) newShadowResolution = 1;
+					if (newShadowResolution > 16384) newShadowResolution = 16384;
+				}
 
-			ImGui::Text("Tonemapping");
-			std::vector<const char*> tonemapModes = { "None", "Reinhard", "Extended Reinhard", "Uncharted2", "Hill ACES", "Narkowicz ACES", "Manual Exposure" };
-
-			if (ImGui::Combo("Tonemap Mode", &tonemapMode, tonemapModes.data(), tonemapModes.size())) {
-				postprocShader.use();
-				postprocShader.set1i("tonemapMode", tonemapMode);
+				if (shadowResolution != newShadowResolution) {
+					if (ImGui::Button("Apply")) {
+						shadowResolution = newShadowResolution;
+						setupScreenRelated();
+					}
+				}
+				//ImGui::SliderInt("Cascades Count", &cascadeCount, 0, 16); //Cannot be changed as I need to change CSM.geom in order for it to work.
+				ImGui::EndDisabled();
+				ImGui::TreePop();
 			}
-			ImGui::NewLine();
+		}
+		if (ImGui::CollapsingHeader("Shaders")) {
+			if (ImGui::Button("Reload")) {
+				mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
 
-			if (ImGui::SliderFloat("Maximum Radiance", &maxRadiance, 0, 10)) {
-				postprocShader.use();
-				postprocShader.set1f("maxRadiance", maxRadiance);
-			}
-			if (ImGui::SliderFloat("Manual Exposure", &exposure, 0, 10)) {
-				postprocShader.use();
-				postprocShader.set1f("exposure", exposure);
-			}
-			
+				mainShader.use();
+				mainShader.set1f("farPlane", cam.farPlane);
+				mainShader.set1b("csmEnabled", csmEnabled);
+				mainShader.set1i("cascadeCount", cascadeCount);
+				for (uint32_t i = 0; i < cascadeCount; i++) {
+					mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
+				}
+				setupUBOs();
 
-			ImGui::Text("Gamma Correction");
-			if (ImGui::Checkbox("Use Gamma Correction", &gammaOn)) {
+				dirLight.changed = true;
+				pointLight.changed = true;
+				spotLight.changed = true;
+
+				dirLight.set("dirLight", mainShader);
+				pointLight.set("pointLights", mainShader);
+				spotLight.set("spotLight", mainShader);
+			}
+			ImGui::SameLine(); ImGui::Text("Main Shader");
+
+			if (ImGui::Button("Reload##0")) {
+				postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postProc.frag");
+
 				postprocShader.use();
 				postprocShader.set1b("gammaOn", gammaOn);
-			}
-
-			ImGui::BeginDisabled(!gammaOn);
-			if (ImGui::SliderFloat("Gamma", &gamma, 0.f, 10.f)) {
-				postprocShader.use();
+				postprocShader.set1b("fxaaEnabled", fxaaEnabled);
+				postprocShader.set1f("exposure", exposure);
 				postprocShader.set1f("gamma", gamma);
+				postprocShader.set1f("maxRadiance", maxRadiance);
+				postprocShader.set1i("tonemapMode", tonemapMode);
+
+				postprocShader.setVec2("inverseScreenSize", glm::vec2(1.f / scrWidth, 1.f / scrHeight));
+				postprocShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
+				postprocShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
+				postprocShader.set1i("ITERATIONS", ITERATIONS);
+				postprocShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
 			}
-
-			ImGui::EndDisabled();
-			
-			ImGui::TreePop();
+			ImGui::SameLine(); ImGui::Text("Post-processing Shader");
 		}
-		if (ImGui::TreeNode("CSM")) {
-			if (ImGui::Checkbox("CSM Enabled", &csmEnabled)) {
-				mainShader.use();
-				mainShader.set1b("csmEnabled", csmEnabled);
+		if (ImGui::CollapsingHeader("UI Options")) {
+			ImGui::SliderFloat("BG Alpha", &bgAlpha, 0.f, 1.f);
+
+			std::vector<const char*> styles = { "Classic", "Dark", "Light" };
+			if (ImGui::Combo("Style", &currentStyle, styles.data(), styles.size())) {
+				if (currentStyle == 0) ImGui::StyleColorsClassic();
+				else if (currentStyle == 1) ImGui::StyleColorsDark();
+				else if (currentStyle == 2) ImGui::StyleColorsLight();
 			}
-			ImGui::BeginDisabled(!csmEnabled);
-
-			if (ImGui::InputInt("Shadow Resolution", (int*)&newShadowResolution, 0)) {
-				if (newShadowResolution < 1) newShadowResolution = 1;
-				if (newShadowResolution > 16384) newShadowResolution = 16384;
-			}
-			
-			if (shadowResolution != newShadowResolution) {
-				if (ImGui::Button("Apply")) {
-					shadowResolution = newShadowResolution;
-					setupScreenRelated();
-				}
-			}
-			//ImGui::SliderInt("Cascades Count", &cascadeCount, 0, 16); //Cannot be changed as I need to change CSM.geom in order for it to work.
-			ImGui::EndDisabled();
-			ImGui::TreePop();
 		}
-	}
-	if (ImGui::CollapsingHeader("Shaders")) {
-		if (ImGui::Button("Reload")) {
-			mainShader.loadShader("src/Shaders/main.vert", "src/Shaders/main.frag");
+		if (ImGui::CollapsingHeader("Profiling", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Text((std::string("Vertices drawn: ") + std::to_string(sceneEntity.verticesCount)).c_str());
+			ImGui::Text((std::string("Faces drawn:    ") + std::to_string(sceneEntity.verticesCount / 3)).c_str());
 
-			mainShader.use();
-			mainShader.set1f("farPlane", cam.farPlane);
-			mainShader.set1b("csmEnabled", csmEnabled);
-			mainShader.set1i("cascadeCount", cascadeCount);
-			for (uint32_t i = 0; i < cascadeCount; i++) {
-				mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
-			}
-			setupUBOs();
-
-			dirLight.changed = true;
-			pointLight.changed = true;
-			spotLight.changed = true;
-
-			dirLight.set("dirLight", mainShader);
-			pointLight.set("pointLights", mainShader);
-			spotLight.set("spotLight", mainShader);
-		}
-		ImGui::SameLine(); ImGui::Text("Main Shader");
-		
-		if (ImGui::Button("Reload##0")) {
-			postprocShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/postProc.frag");
-
-			postprocShader.use();
-			postprocShader.set1b("gammaOn", gammaOn);
-			postprocShader.set1b("fxaaEnabled", fxaaEnabled);
-			postprocShader.set1f("exposure", exposure);
-			postprocShader.set1f("gamma", gamma);
-			postprocShader.set1f("maxRadiance", maxRadiance);
-			postprocShader.set1i("tonemapMode", tonemapMode);
-
-			postprocShader.setVec2("inverseScreenSize", glm::vec2(1.f / scrWidth, 1.f / scrHeight));
-			postprocShader.set1f("EDGE_THRESHOLD_MIN", EDGE_THRESHOLD_MIN);
-			postprocShader.set1f("EDGE_THRESHOLD_MAX", EDGE_THRESHOLD_MAX);
-			postprocShader.set1i("ITERATIONS", ITERATIONS);
-			postprocShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
-		}
-		ImGui::SameLine(); ImGui::Text("Post-processing Shader");
-	}
-	if (ImGui::CollapsingHeader("UI Options")) {
-		ImGui::SliderFloat("BG Alpha", &bgAlpha, 0.f, 1.f);
-
-		std::vector<const char*> styles = { "Classic", "Dark", "Light" };
-		if (ImGui::Combo("Style", &currentStyle, styles.data(), styles.size())) {
-			if (currentStyle == 0) ImGui::StyleColorsClassic();
-			else if (currentStyle == 1) ImGui::StyleColorsDark();
-			else if (currentStyle == 2) ImGui::StyleColorsLight();
-		}
-	}
-	if (ImGui::CollapsingHeader("Profiling", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Text((std::string("Vertices drawn: ") + std::to_string(sceneEntity.verticesCount)).c_str());
-		ImGui::Text((std::string("Faces drawn:    ") + std::to_string(sceneEntity.verticesCount / 3)).c_str());
-
-		ImGui::NewLine();
+			ImGui::NewLine();
 			ImGui::Text(("ImGui Average framerate: " + std::to_string((int)io.Framerate) + " FPS").c_str());
 			ImGui::Text(("ImGui Average frametime: " + std::to_string(1000 / io.Framerate) + " ms").c_str());
 			ImGui::Text(("Average Delta Time:      " + std::to_string(Time::avgMsTime) + " ms").c_str());
@@ -966,50 +971,50 @@ void updateGUI() {
 			ImGui::Text(("Post-Proc Pass: " + std::to_string(postprocQuery.getResult() / 1000000.0) + "  ms").c_str());
 			ImGui::Text(("FXAA Pass:      " + std::to_string(fxaaPassQuery.getResult() / 1000000.0) + "  ms").c_str());
 		}
-	if (ImGui::CollapsingHeader("Software & Hardware Info")) {
-		ImGui::Text(("OpenGL Version: " + openGLVersion).c_str());
-		ImGui::Text(("GLSL Version: " + glslVersion).c_str());
-		ImGui::Text(("Vendor: " + vendor).c_str());
-		ImGui::Text(("GPU Version: " + gpuVersion).c_str());
-	}
-	if (ImGui::CollapsingHeader("OpenGL Options")) {
-		if (ImGui::Checkbox("VSync", &vsyncOn)) {
-			glfwSwapInterval(vsyncOn);
+		if (ImGui::CollapsingHeader("Software & Hardware Info")) {
+			ImGui::Text(("OpenGL Version: " + openGLVersion).c_str());
+			ImGui::Text(("GLSL Version: " + glslVersion).c_str());
+			ImGui::Text(("Vendor: " + vendor).c_str());
+			ImGui::Text(("GPU Version: " + gpuVersion).c_str());
 		}
-		if (ImGui::Checkbox("MSAA", &msaaEnabled)) {
-			if (msaaEnabled) glEnable(GL_MULTISAMPLE);
-			else glDisable(GL_MULTISAMPLE);
-		} ImGui::SameLine();
-		if (ImGui::SliderInt("##0", &msaaSamples, 1, msaaMaxSamples)) {
-			glfwWindowHint(GLFW_SAMPLES, msaaSamples);
+		if (ImGui::CollapsingHeader("OpenGL Options")) {
+			if (ImGui::Checkbox("VSync", &vsyncOn)) {
+				glfwSwapInterval(vsyncOn);
+			}
+			if (ImGui::Checkbox("MSAA", &msaaEnabled)) {
+				if (msaaEnabled) glEnable(GL_MULTISAMPLE);
+				else glDisable(GL_MULTISAMPLE);
+			} ImGui::SameLine();
+			if (ImGui::SliderInt("##0", &msaaSamples, 1, msaaMaxSamples)) {
+				glfwWindowHint(GLFW_SAMPLES, msaaSamples);
+			}
 		}
-	}
-	if (ImGui::CollapsingHeader("Debugging", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Text((std::string("Cam Pos: ") + "X: " + std::format("{:.3f}", cam.pos.x) + ", Y: " + std::format("{:.3f}", cam.pos.y) + ", Z: " + std::format("{:.3f}", cam.pos.z)).c_str());
-		ImGui::SameLine(); if (ImGui::SmallButton("Copy##0")) {
-			ImGui::SetClipboardText((std::format("{:.3f}", cam.pos.x) + ", " + std::format("{:.3f}", cam.pos.y) + ", " + std::format("{:.3f}", cam.pos.z)).c_str());
-		}
-		ImGui::Text((std::string("Cam Rot: ") + "Pitch: " + std::to_string(cam.pitch) + ", Yaw: " + std::to_string(cam.yaw)).c_str());
+		if (ImGui::CollapsingHeader("Debugging", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Text((std::string("Cam Pos: ") + "X: " + std::format("{:.3f}", cam.pos.x) + ", Y: " + std::format("{:.3f}", cam.pos.y) + ", Z: " + std::format("{:.3f}", cam.pos.z)).c_str());
+			ImGui::SameLine(); if (ImGui::SmallButton("Copy##0")) {
+				ImGui::SetClipboardText((std::format("{:.3f}", cam.pos.x) + ", " + std::format("{:.3f}", cam.pos.y) + ", " + std::format("{:.3f}", cam.pos.z)).c_str());
+			}
+			ImGui::Text((std::string("Cam Rot: ") + "Pitch: " + std::to_string(cam.pitch) + ", Yaw: " + std::to_string(cam.yaw)).c_str());
 
-		ImGui::NewLine();
-		if (ImGui::Checkbox("Cascade Debug View", &cascadeDebugView)) {
-			mainShader.use();
-			mainShader.set1b("cascadeDebugView", cascadeDebugView);
+			ImGui::NewLine();
+			if (ImGui::Checkbox("Cascade Debug View", &cascadeDebugView)) {
+				mainShader.use();
+				mainShader.set1b("cascadeDebugView", cascadeDebugView);
+			}
+			if (ImGui::Checkbox("Freeze CSM", &freezeCSM)) {
+				mainShader.use();
+				mainShader.set1b("freezeCSM", freezeCSM);
+				mainShader.setVec3("oldViewPos", cam.pos);
+			}
 		}
-		if (ImGui::Checkbox("Freeze CSM", &freezeCSM)) {
-			mainShader.use();
-			mainShader.set1b("freezeCSM", freezeCSM);
-			mainShader.setVec3("oldViewPos", cam.pos);
-		}
+
+		ImGui::End();
+		//ImGui::ShowMetricsWindow();
+		//ImGui::ShowDemoWindow();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
-
-	ImGui::End();
-	//ImGui::ShowMetricsWindow();
-	//ImGui::ShowDemoWindow();
-
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
 	void cleanup() {
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();

@@ -12,7 +12,7 @@
 	* Tonemapping
 	* Gamma Correction
 * Scene Graph
-* CSM With Regular Shadow Mapping
+* CSM
 
 ## TODOs
 * Frustum Culling with scene graph
@@ -22,16 +22,15 @@
 * Infinite Grid. [This](http://asliceofrendering.com/scene%20helper/2020/01/05/InfiniteGrid/) is a helpful blog post
 * ECS
 * Cleanup the setupApplication func
-* Make camera class hold the projMat, fov, aspect ratio, zFar, zNear.
 * IBL like [this](https://www.youtube.com/watch?v=qbDrqARX07o&t=1131s)
 * Optimization
-* CSM doesn't support transparent textures currently. Easy fix is using depthPrePass.frag and having CSM.vert output texCoord too.
 * Area Lights
-* CSM Freeze Option
-* CSM Visualization
 * Meshes should have vao vbo ebo destruction in the destructor
-* Interpolate better between cascades <!--https://learn.microsoft.com/en-us/windows/win32/dxtecharts/cascaded-shadow-maps-->
-* Improve CSM Quality <!--https://learn.microsoft.com/en-us/windows/win32/dxtecharts/common-techniques-to-improve-shadow-depth-maps-->
+<!--* Interpolate better between cascades <!--https://learn.microsoft.com/en-us/windows/win32/dxtecharts/cascaded-shadow-maps-->
+<!--* Improve CSM Quality <!--https://learn.microsoft.com/en-us/windows/win32/dxtecharts/common-techniques-to-improve-shadow-depth-maps-->
+* Maybe Eye Adaptation
+* Make a debug option to display the shadow maps maybe?? Would be a problem if I can change the number of cascades!
+* Make directories more understandable and easier to navigate.
 
 ## Todo for things I am not sure about. Probably do a lot of them when I buy an ACTUAL GPU THAT IS NOT AN iGPU.
 * Deferred Rendering (it is also good match with SSAO and light volumes). Also remove the occlusion culling when implemented.
@@ -45,13 +44,14 @@
 ## Problems
 * Because we use index drawing, the normals get interpolated between edges of a triangle which is not very pleasant and at angles makes rendering seem very wrong.
 * For some reason the gpu takes like a ms less than the cpu. Maybe use my wacky technique, first draw then do the math.
-* I think FXAA should be after all postproc effects.
+* When I discard pixels if alpha is less than 0.5f the sponza transparent leaves textures don't work correctly. Only works when using < 0.05f
+* The only problem that I am faced with making an Application wrapper instead of writing everything inside main.cpp is that callback funcs cannot be in a class, nor can they be static while accessing object's variables.
 
 ## Non-problematic problems. More like, things that can be implemented cleaner.
 * Texture reuse optimization for models.
 
 ## Ideas for an actual name for the engine
-* PenumbraEngine. First I have to implement shadows though (: Edit: They are implemented but they are hard  shadows, nvm.
+* PenumbraEngine. First I have to implement shadows though (: Edit: They are implemented but they are hard shadows, nvm.
 
 <!---
 ## Passes (I have to minimize them, and there will be a lot more)

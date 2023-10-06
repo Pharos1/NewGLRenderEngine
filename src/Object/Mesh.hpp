@@ -1,7 +1,7 @@
 #pragma once
 #include "../pch.h"
 #include "Vertex.hpp"
-#include "Material.hpp"
+#include "../Render/Material.hpp"
 
 class Mesh{
 protected:
