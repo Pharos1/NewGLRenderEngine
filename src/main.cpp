@@ -35,7 +35,6 @@ void cleanup();
 
 //Every frame
 void draw(const Shader& shader);
-void updateGUI();
 
 //CSM
 std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view);
@@ -177,15 +176,6 @@ Query postprocQuery;
 Query guiPassQuery;
 Query shadowPassQuery;
 Query fxaaPassQuery;
-
-//GUI
-ImGuiIO io;
-ImGuiStyle* style;
-float windowAlpha;
-
-//UI Options
-int currentStyle = 0; //0 - Classic, 1 - Dark, 2 - Light
-float bgAlpha = .8f;
 
 //Software and Hardwere Info
 std::string openGLVersion;
@@ -425,10 +415,10 @@ void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 	}
 }
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
-	if (button == GLFW_MOUSE_BUTTON_1 && !io.WantCaptureMouse) {
+	if (button == GLFW_MOUSE_BUTTON_1 && !GUI::io.WantCaptureMouse) {
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		mouseLocked = true;
-		style->Alpha = 0.3f;
+		GUI::style->Alpha = 0.3f;
 	}
 }
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -438,7 +428,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		mouseLocked = false;
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		style->Alpha = windowAlpha;
+		GUI::style->Alpha = GUI::windowAlpha;
 	}
 }
 
@@ -629,16 +619,16 @@ void initImGui(){
 	//StyleColorsDark();
 
 	//Style
-	if (currentStyle == 0) ImGui::StyleColorsClassic();
-	else if (currentStyle == 1) ImGui::StyleColorsDark();
-	else if (currentStyle == 2) ImGui::StyleColorsLight();
+	if (GUI::currentStyle == 0) ImGui::StyleColorsClassic();
+	else if (GUI::currentStyle == 1) ImGui::StyleColorsDark();
+	else if (GUI::currentStyle == 2) ImGui::StyleColorsLight();
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 450");
-	style = &ImGui::GetStyle();
-	windowAlpha = style->Alpha;
+	GUI::style = &ImGui::GetStyle();
+	GUI::windowAlpha = GUI::style->Alpha;
 
-	style->Alpha = .3f;
+	GUI::style->Alpha = .3f;
 }
 void setupUBOs() {
 	if (!uboMatrices) {
@@ -665,10 +655,7 @@ void setupUBOs() {
 }
 }
 void cleanup() {
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
-
+	GUI::cleanup();
 	glfwTerminate();
 }
 
@@ -721,9 +708,102 @@ void draw(const Shader& shader) {
 	fxaaPassQuery.end();
 
 	guiPassQuery.begin();
-	updateGUI();
+	GUI::updateGUI();
 	guiPassQuery.end();
 }
+
+//CSM
+std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
+	const auto inv = glm::inverse(proj * view);
+
+	std::vector<glm::vec4> frustumCorners;
+	for (unsigned int x = 0; x < 2; ++x) {
+		for (unsigned int y = 0; y < 2; ++y) {
+			for (unsigned int z = 0; z < 2; ++z) {
+				const glm::vec4 pt =
+					inv * glm::vec4(
+						2.0f * x - 1.0f,
+						2.0f * y - 1.0f,
+						2.0f * z - 1.0f,
+						1.0f);
+				frustumCorners.push_back(pt / pt.w);
+			}
+		}
+	}
+
+	return frustumCorners;
+}
+glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane) {
+	const auto proj = glm::perspective(glm::radians(cam.fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
+
+	auto corners = getFrustumCornersWorldSpace(proj, cam.view);
+	glm::vec3 center = glm::vec3(0, 0, 0);
+	for (const auto& v : corners) {
+		center += glm::vec3(v);
+	}
+	center /= corners.size();
+
+	const auto lightView = glm::lookAt(center - dirLight.getDir(), center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+
+	float minX = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float minY = std::numeric_limits<float>::max();
+	float maxY = std::numeric_limits<float>::lowest();
+	float minZ = std::numeric_limits<float>::max();
+	float maxZ = std::numeric_limits<float>::lowest();
+	for (const auto& v : corners) {
+		const auto trf = lightView * v;
+		minX = std::min(minX, trf.x);
+		maxX = std::max(maxX, trf.x);
+		minY = std::min(minY, trf.y);
+		maxY = std::max(maxY, trf.y);
+		minZ = std::min(minZ, trf.z);
+		maxZ = std::max(maxZ, trf.z);
+	}
+
+	//Tune this parameter according to the scene. Changes the depth of the light frustum. Therefor changes the precision of the depth value that is written to the buffer.
+	constexpr float zMult = 10.f;
+	if (minZ < 0) {
+		minZ *= zMult;
+	}
+	else {
+		minZ /= zMult;
+	}
+	if (maxZ < 0) {
+		maxZ /= zMult;
+	}
+	else {
+		maxZ *= zMult;
+	}
+
+	glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+
+	return lightProjection * lightView;
+}
+std::vector<glm::mat4> getLightSpaceMatrices() {
+	std::vector<glm::mat4> ret;
+	for (uint32_t i = 0; i < cascadeCount; i++) {
+		if (i == 0) {
+			ret.push_back(getLightSpaceMatrix(cam.nearPlane, shadowCascadeLevels[i]));
+		}
+		else {
+			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
+		}
+	}
+	return ret;
+}
+
+namespace GUI {
+	//GUI
+	ImGuiIO io;
+	ImGuiStyle* style;
+	float windowAlpha;
+	
+	//UI Options
+	int currentStyle = 0; //0 - Classic, 1 - Dark, 2 - Light
+	float bgAlpha = .8f;
+
 void updateGUI() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -968,85 +1048,9 @@ void updateGUI() {
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-
-//CSM
-std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
-	const auto inv = glm::inverse(proj * view);
-
-	std::vector<glm::vec4> frustumCorners;
-	for (unsigned int x = 0; x < 2; ++x) {
-		for (unsigned int y = 0; y < 2; ++y) {
-			for (unsigned int z = 0; z < 2; ++z) {
-				const glm::vec4 pt =
-					inv * glm::vec4(
-						2.0f * x - 1.0f,
-						2.0f * y - 1.0f,
-						2.0f * z - 1.0f,
-						1.0f);
-				frustumCorners.push_back(pt / pt.w);
-			}
-		}
+	void cleanup() {
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
 	}
-
-	return frustumCorners;
-}
-glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane) {
-	const auto proj = glm::perspective(glm::radians(cam.fov), (float)scrWidth / scrHeight, nearPlane, farPlane);
-
-	auto corners = getFrustumCornersWorldSpace(proj, cam.view);
-	glm::vec3 center = glm::vec3(0, 0, 0);
-	for (const auto& v : corners) {
-		center += glm::vec3(v);
-	}
-	center /= corners.size();
-
-	const auto lightView = glm::lookAt(center - glm::normalize(dirLight.getDir()), center, glm::vec3(0.0f, 1.0f, 0.0f));
-
-
-	float minX = std::numeric_limits<float>::max();
-	float maxX = std::numeric_limits<float>::lowest();
-	float minY = std::numeric_limits<float>::max();
-	float maxY = std::numeric_limits<float>::lowest();
-	float minZ = std::numeric_limits<float>::max();
-	float maxZ = std::numeric_limits<float>::lowest();
-	for (const auto& v : corners) {
-		const auto trf = lightView * v;
-		minX = std::min(minX, trf.x);
-		maxX = std::max(maxX, trf.x);
-		minY = std::min(minY, trf.y);
-		maxY = std::max(maxY, trf.y);
-		minZ = std::min(minZ, trf.z);
-		maxZ = std::max(maxZ, trf.z);
-	}
-
-	//Tune this parameter according to the scene. Changes the depth of the light frustum. Therefor changes the precision of the depth value that is written to the buffer.
-	constexpr float zMult = 10.f;
-	if (minZ < 0) {
-		minZ *= zMult;
-	}
-	else {
-		minZ /= zMult;
-	}
-	if (maxZ < 0) {
-		maxZ /= zMult;
-	}
-	else {
-		maxZ *= zMult;
-	}
-
-	glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
-
-	return lightProjection * lightView;
-}
-std::vector<glm::mat4> getLightSpaceMatrices() {
-	std::vector<glm::mat4> ret;
-	for (uint32_t i = 0; i < cascadeCount; i++) {
-		if (i == 0) {
-			ret.push_back(getLightSpaceMatrix(cam.nearPlane, shadowCascadeLevels[i]));
-		}
-		else {
-			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
-		}
-	}
-	return ret;
 }
