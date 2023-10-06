@@ -628,7 +628,7 @@ void initImGui(){
 	GUI::style = &ImGui::GetStyle();
 	GUI::windowAlpha = GUI::style->Alpha;
 
-	GUI::style->Alpha = .3f;
+	GUI::style->Alpha = GUI::offAlpha;
 }
 void setupUBOs() {
 	if (!uboMatrices) {
@@ -803,6 +803,7 @@ namespace GUI {
 	//UI Options
 	int currentStyle = 0; //0 - Classic, 1 - Dark, 2 - Light
 	float bgAlpha = .8f;
+	float offAlpha = .3f;
 
 void updateGUI() {
 	ImGui_ImplOpenGL3_NewFrame();
