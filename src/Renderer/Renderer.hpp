@@ -78,7 +78,6 @@ public: //Must be private but for debuging purposes
 public: //Have to make some private
 	//Application Specific
 	//UI
-	ImGuiIO io;
 	ImGuiStyle* style;
 	float windowAlpha;
 	bool mouseLocked = true;
@@ -104,7 +103,7 @@ public: //Have to make some private
 
 	//CSM
 	bool csmEnabled = true;
-	uint8_t cascadeCount = 3;
+	uint8_t cascadeCount = 4;
 	std::vector<float> shadowCascadeLevels; //{ farPlane / 50.0f, farPlane / 25.0f, farPlane / 10.0f, farPlane / 2.0f };
 	#define DEFAULT_SHADOW_RESOLUTION 2048
 	GLuint shadowResolution = DEFAULT_SHADOW_RESOLUTION;

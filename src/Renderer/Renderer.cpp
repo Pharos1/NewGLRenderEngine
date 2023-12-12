@@ -28,7 +28,6 @@ void Renderer::initDependencies() {
 	if (err != GLEW_OK)
 		nLog(std::string("Glew Error: ") + (const char*)glewGetErrorString(GLEW_OK), Log::LogError, "");
 
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -60,9 +59,15 @@ void Renderer::init() {
 	//Background Color
 	glClearColor(1.f, 0.f, 1.f, 1.f);
 
+	//Setup Queries
+	depthPassQuery.loadQuery(GL_TIME_ELAPSED);
+	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
+	postprocQuery.loadQuery(GL_TIME_ELAPSED);
+	guiPassQuery.loadQuery(GL_TIME_ELAPSED);
+	shadowPassQuery.loadQuery(GL_TIME_ELAPSED);
+	fxaaPassQuery.loadQuery(GL_TIME_ELAPSED);
+
 	//ImGui
-	//ImGuiIO& io = GetIO(); (void)io;
-	//StyleColorsDark();
 
 	//Style
 	if (currentStyle == 0) ImGui::StyleColorsClassic();
@@ -87,21 +92,28 @@ void Renderer::init() {
 	fxaaShader.loadShader("src/Shaders/basicQuad.vert", "src/Shaders/fxaa.frag");
 	CSMShader.loadShader("src/Shaders/CSM.vert", "src/Shaders/CSM.frag", "src/Shaders/CSM.geom");
 
-	//Uniforms and stuff
+	shadowCascadeLevels.clear();
+	float lambda = 0.9f;// .8f;
+	float virtualNearPlane = 1.f;// nearPlane;// 1.f;
+	for (uint32_t i = 1; i < cascadeCount; i++) { //Practical view frustum split (combination between uniform and logarithmic)
+		float k = (float)i / (float)cascadeCount;
+		float f = lambda * (virtualNearPlane * powf(cam->farPlane / virtualNearPlane, k)) + (1.f - lambda) * (virtualNearPlane + (cam->farPlane - virtualNearPlane) * k);
+		shadowCascadeLevels.push_back(f);
+	}
+	shadowCascadeLevels.push_back(cam->farPlane);
+
+	//Ge cascadePlaneDistances
+	mainShader.use();
+	for (uint32_t i = 0; i < cascadeCount; i++) {
+		mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
+	}
+
+	//Set mandatory uniform values
 	mainShader.use();
 	mainShader.set1f("specularExponent", 32.f);
 	mainShader.set1f("farPlane", cam->farPlane);
-
-	dirLight->set("dirLight", mainShader);
-	for (auto pointLight : pointLights) {
-		pointLight->set("pointLight", mainShader);
-	}
-	for (auto spotLight : spotLights) {
-		spotLight->set("spotLight", mainShader);
-	}
-
-	//lightBoxShader.use();
-	//lightBoxShader.setMat4("model", glm::scale(glm::mat4(1.f), glm::vec3(0.1f)));
+	mainShader.set1b("csmEnabled", csmEnabled);
+	mainShader.set1i("cascadeCount", cascadeCount);
 
 	postprocShader.use();
 	postprocShader.set1b("gammaOn", gammaOn);
@@ -118,38 +130,10 @@ void Renderer::init() {
 	fxaaShader.set1i("ITERATIONS", ITERATIONS);
 	fxaaShader.set1f("SUBPIXEL_QUALITY", SUBPIXEL_QUALITY);
 
-	//Queries
-	depthPassQuery.loadQuery(GL_TIME_ELAPSED);
-	renderPassQuery.loadQuery(GL_TIME_ELAPSED);
-	postprocQuery.loadQuery(GL_TIME_ELAPSED);
-	guiPassQuery.loadQuery(GL_TIME_ELAPSED);
-	shadowPassQuery.loadQuery(GL_TIME_ELAPSED);
-	fxaaPassQuery.loadQuery(GL_TIME_ELAPSED);
-
-	//Generate and set Cascades Far Planes
-	mainShader.use();
-	mainShader.set1b("csmEnabled", csmEnabled);
-	mainShader.set1i("cascadeCount", cascadeCount);
-
-	shadowCascadeLevels.clear();
-	float lambda = 0.9f;// .8f;
-	float virtualNearPlane = 1.f;// nearPlane;// 1.f;
-	for (uint32_t i = 1; i < cascadeCount; i++) { //Practical view frustum split (combination between uniform and logarithmic)
-		float k = (float)i / (float)cascadeCount;
-		float f = lambda * (virtualNearPlane * powf(cam->farPlane / virtualNearPlane, k)) + (1.f - lambda) * (virtualNearPlane + (cam->farPlane - virtualNearPlane) * k);
-		shadowCascadeLevels.push_back(f);
-	}
-	shadowCascadeLevels.push_back(cam->farPlane);
-
-	for (uint32_t i = 0; i < cascadeCount; i++) {
-		mainShader.set1f("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
-	}
-
 	setupFramebuffers();
 	setupUBOs();
 }
 void Renderer::setupFramebuffers() {
-	//Framebuffers
 	postprocFB.create2D(GL_TEXTURE_2D, scrWidth, scrHeight, GL_RGBA16F);
 	fxaaFB.create2D(GL_TEXTURE_2D, scrWidth, scrHeight, GL_RGBA, GL_RGBA, NULL);
 
@@ -170,6 +154,7 @@ void Renderer::setupUBOs() {
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 
+	//Set proj
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cam->proj));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -185,41 +170,25 @@ void Renderer::setupUBOs() {
 	}
 }
 void Renderer::render() {
-	//Draw
-		//CSM Pass
-
+	//CSM Pass
 	if (!freezeCSM) {
 		const auto lightMatrices = getLightSpaceMatrices();
 		glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
-		for (size_t i = 0; i < lightMatrices.size(); i++) {
+
+		for (uint32_t i = 0; i < lightMatrices.size(); i++) {
 			glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4), sizeof(glm::mat4), &lightMatrices[i]);
 		}
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 
-	shadowPassQuery.begin();
-	if (csmEnabled) {
-		glDepthFunc(GL_LESS);
-		glViewport(0, 0, shadowResolution, shadowResolution);
-		shadowFB.bind();
-		shadowFB.clear();
-		glCullFace(GL_FRONT);
-		glEnable(GL_DEPTH_CLAMP); //From a comment by https://disqus.com/by/disqus_XCUOEk9iLH/? on disqus.
-		for (auto entity : entities) {
-			entity->draw(CSMShader);
-		}
-		glDisable(GL_DEPTH_CLAMP);
-		glCullFace(GL_BACK);
-		shadowFB.unbind();
-		glViewport(0, 0, scrWidth, scrHeight);
-	}
-	shadowPassQuery.end();
-
+	//Set lights
 	dirLight->set("dirLight", mainShader);
-	for (auto pointLight : pointLights)
+	for (auto pointLight : pointLights) {
 		pointLight->set("pointLight", mainShader);
-	for (auto spotLight : spotLights)
+	}
+	for (auto spotLight : spotLights) {
 		spotLight->set("spotLight", mainShader);
+	}
 
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->view));
@@ -235,32 +204,64 @@ void Renderer::render() {
 	//quad.draw();
 	//glDepthFunc(GL_LESS);
 
+	//Shadow Pass
+	shadowPassQuery.begin();
+
+	if (csmEnabled) {
+		glDepthFunc(GL_LESS);
+		glViewport(0, 0, shadowResolution, shadowResolution);
+
+		glCullFace(GL_FRONT);
+		glEnable(GL_DEPTH_CLAMP); //From a comment by https://disqus.com/by/disqus_XCUOEk9iLH/? on disqus.
+
+		shadowFB.bind();
+		shadowFB.clear();
+
+		for (auto entity : entities) {
+			entity->draw(CSMShader);
+		}
+		shadowFB.unbind();
+
+		glDisable(GL_DEPTH_CLAMP);
+		glCullFace(GL_BACK);
+
+		glViewport(0, 0, scrWidth, scrHeight);
+		glDepthFunc(GL_LEQUAL);
+	}
+	shadowPassQuery.end();
+
 	//Render Pass
 	postprocFB.bind();
 	postprocFB.clear();
 
+	//Depth pre-pass
 	depthPassQuery.begin();
+
 	for (auto entity : entities) {
 		entity->draw(depthPassShader);
 	}
 	depthPassQuery.end();
 
+	//Draw Pass
 	renderPassQuery.begin();
 	shadowFB.texture.bind(4);
+
 	for (auto entity : entities) {
 		entity->draw(mainShader);
 	}
-
 	renderPassQuery.end();
 
-	//Post-processing pass
 	postprocFB.unbind();
+
+	//Post-processing pass
 	fxaaFB.bind();
 	postprocQuery.begin();
 	postprocShader.use();
 	postprocFB.texture.bind(0);
 	glDepthFunc(GL_LEQUAL);
+
 	quad.draw();
+
 	glDepthFunc(GL_LESS);
 	postprocFB.texture.unbind();
 	postprocQuery.end();
@@ -271,7 +272,9 @@ void Renderer::render() {
 	fxaaShader.use();
 	fxaaFB.texture.bind(0);
 	glDepthFunc(GL_LEQUAL);
+
 	quad.draw();
+
 	glDepthFunc(GL_LESS);
 	fxaaPassQuery.end();
 
@@ -289,8 +292,6 @@ void Renderer::updateGUI() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-
-	io = ImGui::GetIO();
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
@@ -369,7 +370,7 @@ void Renderer::updateGUI() {
 				postprocShader.use();
 				postprocShader.set1f("exposure", exposure);
 			}
-
+			ImGui::NewLine();
 
 			ImGui::Text("Gamma Correction");
 			if (ImGui::Checkbox("Use Gamma Correction", &gammaOn)) {
@@ -468,22 +469,23 @@ void Renderer::updateGUI() {
 	if (ImGui::CollapsingHeader("Profiling", ImGuiTreeNodeFlags_DefaultOpen)) {
 		uint32_t verticesCount = 0;
 		uint32_t indicesCount = 0;
+
 		for (auto entity : entities) {
 			verticesCount += entity->verticesCount;
 			indicesCount += entity->indicesCount;
 		}
+
 		ImGui::Text((std::string("Vertices drawn: ") + std::to_string(verticesCount)).c_str());
 		ImGui::Text((std::string("Faces drawn:    ") + std::to_string(indicesCount / 3)).c_str());
 
 		ImGui::NewLine();
-		ImGui::Text(("ImGui Average framerate: " + std::to_string((int)io.Framerate) + " FPS").c_str());
-		ImGui::Text(("ImGui Average frametime: " + std::to_string(1000 / io.Framerate) + " ms").c_str());
+		ImGui::Text(("ImGui Average framerate: " + std::to_string((int)ImGui::GetIO().Framerate) + " FPS").c_str());
+		ImGui::Text(("ImGui Average frametime: " + std::to_string(1000 / ImGui::GetIO().Framerate) + " ms").c_str());
 		ImGui::Text(("Average Delta Time:      " + std::to_string(Time::avgMsTime) + " ms").c_str());
 		ImGui::NewLine();
 
 		ImGui::Text("GPU Times [Queries]");
 		double gpuFrametime = (depthPassQuery.getResult() + renderPassQuery.getResult() + guiPassQuery.getResult() + postprocQuery.getResult() + shadowPassQuery.getResult() + fxaaPassQuery.getResult()) / 1000000.0;
-		//Text(("Approx. CPU time: " + std::to_string(1000 / io.Framerate - gpuFrametime) + " ms").c_str());
 		ImGui::Text(("GPU time: " + std::to_string(gpuFrametime) + " ms").c_str());
 		ImGui::NewLine();
 
@@ -549,9 +551,9 @@ std::vector<glm::vec4> Renderer::getFrustumCornersWorldSpace(const glm::mat4& pr
 	const auto inv = glm::inverse(proj * view);
 
 	std::vector<glm::vec4> frustumCorners;
-	for (unsigned int x = 0; x < 2; ++x) {
-		for (unsigned int y = 0; y < 2; ++y) {
-			for (unsigned int z = 0; z < 2; ++z) {
+	for (uint32_t x = 0; x < 2; x++) {
+		for (uint32_t y = 0; y < 2; y++) {
+			for (uint32_t z = 0; z < 2; z++) {
 				const glm::vec4 pt = inv * glm::vec4(2.0f * x - 1.0f, 2.0f * y - 1.0f, 2.0f * z - 1.0f, 1.0f);
 				frustumCorners.push_back(pt / pt.w);
 			}
@@ -610,6 +612,7 @@ glm::mat4 Renderer::getLightSpaceMatrix(const float nearPlane, const float farPl
 }
 std::vector<glm::mat4> Renderer::getLightSpaceMatrices() {
 	std::vector<glm::mat4> ret;
+
 	for (uint32_t i = 0; i < cascadeCount; i++) {
 		if (i == 0) {
 			ret.push_back(getLightSpaceMatrix(cam->nearPlane, shadowCascadeLevels[i]));
@@ -618,5 +621,6 @@ std::vector<glm::mat4> Renderer::getLightSpaceMatrices() {
 			ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
 		}
 	}
+
 	return ret;
 }

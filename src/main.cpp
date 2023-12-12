@@ -184,21 +184,6 @@ int main() {
 			renderer.shadowPassQuery.retrieveResult();
 			renderer.fxaaPassQuery.retrieveResult();
 			lastTime = now;
-			/*
-			double depthTime = (double)depthPassQuery.getResult() / 1000000;
-			double renderTime = (double)renderPassQuery.getResult() / 1000000;
-			double postprocTime = (double)postprocQuery.getResult() / 1000000;
-
-			std::stringstream ss;
-
-			ss << "Depth pre-pass: " << depthTime << "ms  |  ";
-			ss << "Render Pass: " << renderTime << "ms  |  ";
-			ss << "Post-Processing Pass: " << postprocTime << "ms  |  ";
-			ss << "Summed query time: " << depthTime + renderTime + postprocTime << "ms  |  ";
-			ss << "Chrono Frame Time: " << Time::avgMsTime << "ms\n";
-
-			glfwSetWindowTitle(window, ss.str().c_str());
-			*/
 		}
 		
 		Time::updateDelta();
@@ -316,7 +301,7 @@ void cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
 	ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 	
-	if (button == GLFW_MOUSE_BUTTON_1 && !renderer.io.WantCaptureMouse) {
+	if (button == GLFW_MOUSE_BUTTON_1 && !ImGui::GetIO().WantCaptureMouse) {
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		renderer.mouseLocked = true;
 		renderer.style->Alpha = 0.3f;
