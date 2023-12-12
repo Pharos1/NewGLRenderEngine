@@ -34,7 +34,8 @@ public:
 	Transform transform;
 	std::vector<Entity*> children; //Note: could also make the entity own the vectors on the stack.
 	Entity* parent = nullptr;
-	int verticesCount = 0;
+	uint32_t verticesCount = 0;
+	uint32_t indicesCount = 0;
 
 	Entity() = default;
 
@@ -43,5 +44,5 @@ public:
 	void updateSelfAndChild();
 	void draw(const Shader& shader);
 	void loadModel(const std::string& path);
-	void updateVertCount();
+	void updateVertAndIndexCount();
 };

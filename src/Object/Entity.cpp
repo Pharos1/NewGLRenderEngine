@@ -42,7 +42,7 @@ bool Transform::isChanged() const { return changed; }
 void Entity::addChild(Entity& child) {
 	children.push_back(&child);
 	child.parent = this;
-	updateVertCount();
+	updateVertAndIndexCount();
 }
 void Entity::updateSelf() {
 	if (transform.isChanged()) {
@@ -73,13 +73,15 @@ void Entity::draw(const Shader& shader) {
 }
 void Entity::loadModel(const std::string& path) {
 	Model::loadModel(path);
-	updateVertCount();
+	updateVertAndIndexCount();
 }
-void Entity::updateVertCount() {
+void Entity::updateVertAndIndexCount() {
 	for (auto& mesh : meshes) {
 		verticesCount += mesh.verticesCount;
+		indicesCount += mesh.indicesCount;
 	}
 	for (auto child : children) {
 		verticesCount += child->verticesCount;
+		indicesCount += child->indicesCount;
 	}
 }
