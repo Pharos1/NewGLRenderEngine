@@ -54,6 +54,13 @@ void Renderer::init() {
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
+	if (wireframeMode) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
 	if (mouseLocked) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//Background Color
@@ -194,6 +201,13 @@ void Renderer::render() {
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(cam->view));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+	if (wireframeMode) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glDepthFunc(GL_LEQUAL);
 
@@ -252,6 +266,9 @@ void Renderer::render() {
 	renderPassQuery.end();
 
 	postprocFB.unbind();
+
+	//Reset glPolygonMode so you can draw the render quad normally
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//Post-processing pass
 	fxaaFB.bind();
@@ -512,6 +529,15 @@ void Renderer::updateGUI() {
 		} ImGui::SameLine();
 		if (ImGui::SliderInt("##0", &msaaSamples, 1, msaaMaxSamples)) {
 			glfwWindowHint(GLFW_SAMPLES, msaaSamples);
+		}
+
+		if (ImGui::Checkbox("Draw wireframe", &wireframeMode)) {
+			if (wireframeMode) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+			else {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
 		}
 	}
 	if (ImGui::CollapsingHeader("Debugging", ImGuiTreeNodeFlags_DefaultOpen)) {

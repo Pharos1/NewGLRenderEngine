@@ -32,6 +32,7 @@ public: //Must be private but for debuging purposes
 	int msaaSamples = 4;
 	bool msaaEnabled = true;
 	int msaaMaxSamples = 0;
+	bool wireframeMode = false;
 
 	//Queries
 	Query depthPassQuery;

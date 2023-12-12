@@ -31,7 +31,7 @@
 * Maybe Eye Adaptation
 * Make a debug option to display the shadow maps maybe?? Would be a problem if I can change the number of cascades!
 * Wireframe render Option in gui
-* Renderer class that manages entityes and ligths and shaders stuff
+
 ## Todo for things I am not sure about. Probably do a lot of them when I buy an ACTUAL GPU THAT IS NOT AN iGPU.
 * Deferred Rendering (it is also good match with SSAO and light volumes). Also remove the occlusion culling when implemented.
 * Post-Processing
