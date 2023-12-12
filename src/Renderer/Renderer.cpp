@@ -544,15 +544,7 @@ void Renderer::cleanupGUI() {
 	ImGui::DestroyContext();
 }
 
-void Renderer::retrieveQueryResults() {
-	depthPassQuery.retrieveResult();
-	renderPassQuery.retrieveResult();
-	postprocQuery.retrieveResult();
-	guiPassQuery.retrieveResult();
-	shadowPassQuery.retrieveResult();
-	fxaaPassQuery.retrieveResult();
-}
-
+//CSM
 std::vector<glm::vec4> Renderer::getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
 	const auto inv = glm::inverse(proj * view);
 

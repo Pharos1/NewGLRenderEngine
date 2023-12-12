@@ -177,7 +177,12 @@ int main() {
 		double now = glfwGetTime();
 		
 		if (now - lastTime > 1) {
-			renderer.retrieveQueryResults();
+			renderer.depthPassQuery.retrieveResult();
+			renderer.renderPassQuery.retrieveResult();
+			renderer.postprocQuery.retrieveResult();
+			renderer.guiPassQuery.retrieveResult();
+			renderer.shadowPassQuery.retrieveResult();
+			renderer.fxaaPassQuery.retrieveResult();
 			lastTime = now;
 			/*
 			double depthTime = (double)depthPassQuery.getResult() / 1000000;

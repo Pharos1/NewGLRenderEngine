@@ -136,8 +136,6 @@ public: //Still there aren't any getters/setters as this is WIP
 	void updateGUI();
 	void cleanupGUI();
 
-	void retrieveQueryResults();
-
 	//CSM
 	std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view);
 	glm::mat4 getLightSpaceMatrix(const float nearPlane, const float farPlane);
