@@ -26,6 +26,8 @@ Query& Query::operator==(Query&& other) noexcept {
 	std::swap(inUse, other.inUse);
 	std::swap(resultReady, other.resultReady);
 	std::swap(result, other.result);
+
+	return *this;
 }
 
 void Query::loadQuery(int type) {
