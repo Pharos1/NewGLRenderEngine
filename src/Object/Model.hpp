@@ -5,7 +5,7 @@
 #include "../GL/Shader.hpp"
 #include "../GL/Texture.hpp"
 #include "Vertex.hpp"
-#include "../Render/Material.hpp"
+#include "../Object/Material.hpp"
 
 class Model {
 public:

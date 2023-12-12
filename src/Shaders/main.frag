@@ -36,8 +36,10 @@ struct SpotLight{
 };
 
 uniform DirLight dirLight;
-uniform PointLight pointLight;
-uniform SpotLight spotLight;
+#define NUMBER_OF_POINT_LIGHTS 4
+uniform PointLight pointLights[NUMBER_OF_POINT_LIGHTS];
+#define NUMBER_OF_SPOT_LIGHTS 1
+uniform SpotLight spotLights[NUMBER_OF_SPOT_LIGHTS];
 
 layout(binding = 0) uniform sampler2D albedoTex;
 layout(binding = 1) uniform sampler2D metallicTex;
@@ -127,8 +129,12 @@ void main(){
 
 	vec3 result = vec3(0.f);
 	result += calcDirLight(dirLight, fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
-	result += calcPointLight(pointLight, fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
-	result += calcSpotLight(spotLight, fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	for(int i = 0; i < NUMBER_OF_POINT_LIGHTS; i++) {
+		result += calcPointLight(pointLights[i], fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	}
+	for(int i = 0; i < NUMBER_OF_SPOT_LIGHTS; i++) {
+		result += calcSpotLight(spotLights[i], fragNormal, viewDir, worldPos, albedo, sampledMetallic, sampledRoughness, baseReflectivity);
+	}
 
 	float ambientCoeficient = .03f;
 	result += ambientCoeficient * albedo;
