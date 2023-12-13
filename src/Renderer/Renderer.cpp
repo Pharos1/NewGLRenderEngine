@@ -530,15 +530,6 @@ void Renderer::updateGUI() {
 		if (ImGui::SliderInt("##0", &msaaSamples, 1, msaaMaxSamples)) {
 			glfwWindowHint(GLFW_SAMPLES, msaaSamples);
 		}
-
-		if (ImGui::Checkbox("Draw wireframe", &wireframeMode)) {
-			if (wireframeMode) {
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			}
-			else {
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			}
-		}
 	}
 	if (ImGui::CollapsingHeader("Debugging", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::Text((std::string("Cam Pos: ") + "X: " + std::format("{:.3f}", cam->pos.x) + ", Y: " + std::format("{:.3f}", cam->pos.y) + ", Z: " + std::format("{:.3f}", cam->pos.z)).c_str());
@@ -556,6 +547,16 @@ void Renderer::updateGUI() {
 			mainShader.use();
 			mainShader.set1b("freezeCSM", freezeCSM);
 			mainShader.setVec4("oldThirdViewRow", glm::vec4(cam->view[0][2], cam->view[1][2], cam->view[2][2], cam->view[3][2]));
+		}
+
+		ImGui::NewLine();
+		if (ImGui::Checkbox("Draw wireframe", &wireframeMode)) {
+			if (wireframeMode) {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+			else {
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
 		}
 	}
 
