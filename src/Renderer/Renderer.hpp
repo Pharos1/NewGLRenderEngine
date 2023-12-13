@@ -30,7 +30,7 @@ public: //Must be private but for debuging purposes
 	//OpenGL Options
 	bool vsyncOn = false;
 	int msaaSamples = 4;
-	bool msaaEnabled = true;
+	bool msaaEnabled = false;
 	int msaaMaxSamples = 0;
 	bool wireframeMode = false;
 

@@ -111,6 +111,7 @@ std::vector<Vertex> planeVerts = {
 Renderer renderer;
 
 int main() {
+	std::filesystem::current_path(std::filesystem::path(__FILE__).parent_path().parent_path()); //Working dir = solution path
 	renderer.initDependencies();
 
 	//Setup Debugging

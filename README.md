@@ -20,7 +20,6 @@
 * Sub-pixel shadow mapping with CSM. <!--Here I'd like to save [this](https://disqus.com/by/disqus_XCUOEk9iLH/?) comment on LearnOpenGL) --> Or it's fast counterpart <!--http://www.kunzhou.net/2009/subpixel_shadow.pdf-->
 * Quaternions for inner calculations. I want to keep Euler Angles for rotations through the GUI.
 * Infinite Grid. [This](http://asliceofrendering.com/scene%20helper/2020/01/05/InfiniteGrid/) is a helpful blog post
-* ECS
 * Cleanup the setupApplication func
 * IBL like [this](https://www.youtube.com/watch?v=qbDrqARX07o&t=1131s)
 * Optimization
@@ -30,7 +29,7 @@
 <!--* Improve CSM Quality <!--https://learn.microsoft.com/en-us/windows/win32/dxtecharts/common-techniques-to-improve-shadow-depth-maps-->
 * Maybe Eye Adaptation
 * Make a debug option to display the shadow maps maybe?? Would be a problem if I can change the number of cascades!
-* Wireframe render Option in gui
+* ECS
 
 ## Todo for things I am not sure about. Probably do a lot of them when I buy an ACTUAL GPU THAT IS NOT AN iGPU.
 * Deferred Rendering (it is also good match with SSAO and light volumes). Also remove the occlusion culling when implemented.
@@ -85,6 +84,8 @@
 * For some reason the gpu takes like a ms less than the cpu. Maybe use my wacky technique, first draw then do the math.
 * When I discard pixels if alpha is less than 0.5f the sponza transparent leaves textures don't work correctly. Only works when using < 0.05f
 * The only problem that I am faced with making an Application wrapper instead of writing everything inside main.cpp is that callback funcs cannot be in a class, nor can they be static while accessing object's variables.
+
+* SOme problems with exporting the app, everytime you run it the map is being loaded differently ) :. More like it is rendered strangely but the shadows are normal. Problem only when using release
 
 ## Non-problematic problems. More like, things that can be implemented cleaner.
 * Texture reuse optimization for models.
