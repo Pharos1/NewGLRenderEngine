@@ -57,7 +57,7 @@ uniform float farPlane;
 uniform float cascadePlaneDistances[16];
 uniform bool cascadeDebugView;
 uniform bool freezeCSM;
-uniform vec3 oldViewPos;
+uniform vec4 oldThirdViewRow;
 
 //layout(binding = 0) uniform sampler2D gPositionBuffer;
 //layout(binding = 1) uniform sampler2D gNormalBuffer;
@@ -106,7 +106,9 @@ void main(){
 	*/
 
 	if (cascadeDebugView) {
-		float depthValue = freezeCSM ? distance(oldViewPos, worldPos) : distance(viewPos, worldPos);
+		//float depthValue = freezeCSM ? distance(oldViewPos, worldPos) : distance(viewPos, worldPos);
+		vec4 thirdViewRow = freezeCSM ? oldThirdViewRow : vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
+		float depthValue = abs(dot(thirdViewRow, vec4(worldPos, 1.f)));
 		//float depthValue = abs(dot(vec4(view[0][2], view[1][2], view[2][2], view[3][2]), vec4(worldPos, 1.f)));
 
 		int layer = -1;
@@ -288,8 +290,8 @@ float calcShadow(vec3 normal, vec3 lightDir) {
 	if (!csmEnabled) return 0.f;
 
 	//Select cascade layer
-	//vec4 thirdViewRow = vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
-	float depthValue = freezeCSM ? distance(oldViewPos, worldPos) : distance(viewPos, worldPos);//abs(dot(vec4(view[0][2], view[1][2], view[2][2], view[3][2]), vec4(worldPos, 1.f)));
+	vec4 thirdViewRow = freezeCSM ? oldThirdViewRow : vec4(view[0][2], view[1][2], view[2][2], view[3][2]);
+	float depthValue = abs(dot(thirdViewRow, vec4(worldPos, 1.f)));
 
 	int layer = -1;
 	for (int i = 0; i < cascadeCount; i++) {

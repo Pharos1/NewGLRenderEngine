@@ -555,7 +555,7 @@ void Renderer::updateGUI() {
 		if (ImGui::Checkbox("Freeze CSM", &freezeCSM)) {
 			mainShader.use();
 			mainShader.set1b("freezeCSM", freezeCSM);
-			mainShader.setVec3("oldViewPos", cam->pos);
+			mainShader.setVec4("oldThirdViewRow", glm::vec4(cam->view[0][2], cam->view[1][2], cam->view[2][2], cam->view[3][2]));
 		}
 	}
 
