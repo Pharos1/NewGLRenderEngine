@@ -186,10 +186,7 @@ int main() {
 			renderer.fxaaPassQuery.retrieveResult();
 			lastTime = now;
 		}
-		std::cout << cam.view[0] << "\n";
-		std::cout << cam.view[1] << "\n";
-		std::cout << cam.view[2] << "\n";
-		std::cout << cam.view[3] << "\n\n";
+
 		Time::updateDelta();
 		if (renderer.mouseLocked) cam.processInput(renderer.window);
 
